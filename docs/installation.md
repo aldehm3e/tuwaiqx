@@ -152,6 +152,8 @@ docker compose up -d --build
 
 Then add that runtime from `/admin/models` as an `OpenAI-compatible/runtime` provider.
 
+For a fuller no-Ollama path, see [Install Without Ollama](#install-without-ollama).
+
 ### 9. Check Health
 
 ```bash
@@ -246,6 +248,81 @@ docker compose up -d
 ```
 
 Open `http://localhost:3000/admin` and complete the first-run setup.
+
+## Install Without Ollama
+
+Use this path when the organization does not want Ollama at all.
+
+TuwaiqX can run without Ollama if you provide another chat and embedding provider. The provider can be:
+
+- an OpenAI-compatible local runtime such as LocalAI, llama.cpp server, or vLLM
+- an OpenAI-compatible API endpoint on another university server
+- an optional external API provider, if the organization policy allows it
+
+### Docker Compose Without Ollama
+
+Do not start the Ollama profile. Start only the main stack:
+
+```bash
+docker compose up -d --build
+```
+
+In `.env`, set the default provider to OpenAI-compatible if you want `/api/health` to check that provider before setup:
+
+```env
+DEFAULT_MODEL_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_BASE_URL=https://your-runtime.example.edu/v1
+OPENAI_COMPATIBLE_API_KEY=CHANGE_THIS_IF_REQUIRED
+OPENAI_COMPATIBLE_CHAT_MODEL=your-chat-model
+OPENAI_COMPATIBLE_EMBEDDING_MODEL=your-embedding-model
+```
+
+If the runtime is inside the same Docker network, use its service name. For example, with the optional LocalAI profile:
+
+```env
+DEFAULT_MODEL_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_BASE_URL=http://localai:8080/v1
+OPENAI_COMPATIBLE_CHAT_MODEL=tuwaiqx-chat-your-model-id
+OPENAI_COMPATIBLE_EMBEDDING_MODEL=tuwaiqx-embedding-your-model-id
+```
+
+Then start LocalAI instead of Ollama:
+
+```bash
+docker compose --profile local-models up -d --build
+```
+
+Open `/admin/setup` and choose:
+
+```text
+Provider type: OpenAI-compatible/runtime
+Base URL: https://your-runtime.example.edu/v1
+Chat model: your-chat-model
+Embedding model: your-embedding-model
+API key: only if required by the runtime
+```
+
+After setup, `/api/health` checks the configured default provider from the admin settings.
+
+### Manual Install Without Ollama
+
+In a manual non-Docker install, skip the Ollama installation and point TuwaiqX to another runtime:
+
+```env
+DEFAULT_MODEL_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_BASE_URL=http://127.0.0.1:8080/v1
+OPENAI_COMPATIBLE_API_KEY=
+OPENAI_COMPATIBLE_CHAT_MODEL=your-chat-model
+OPENAI_COMPATIBLE_EMBEDDING_MODEL=your-embedding-model
+```
+
+Then restart TuwaiqX:
+
+```bash
+sudo systemctl restart tuwaiqx
+```
+
+If the runtime is on another server, use its private network URL and make sure the TuwaiqX server can reach it. Do not expose the runtime publicly unless the university secures it with authentication, firewall rules, and HTTPS.
 
 ## Optional Ollama Profile
 
@@ -490,6 +567,8 @@ sudo systemctl restart tuwaiqx
 
 For LocalAI, llama.cpp server, vLLM, or another runtime, expose an OpenAI-compatible URL on the server or private network, then add it in `/admin/models` as an `OpenAI-compatible/runtime` provider.
 
+If the organization does not want Ollama, skip the Ollama commands and use the OpenAI-compatible settings from [Install Without Ollama](#install-without-ollama).
+
 ### 11. Check Health
 
 ```bash
@@ -543,6 +622,7 @@ npm run dev
 - Configure backups.
 - Configure allowed widget domains.
 - Pull local models before relying on Ollama.
+- If not using Ollama, configure an OpenAI-compatible/runtime provider before production testing.
 - Mount a persistent `MODEL_STORAGE_PATH` if using uploaded local model files.
 - Do not expose database, Redis, Ollama, or LocalAI ports publicly.
 - Back up PostgreSQL, uploaded documents, and model files.

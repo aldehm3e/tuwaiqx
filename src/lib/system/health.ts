@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { prisma } from "@/src/lib/db/prisma";
 import { getEnv } from "@/src/lib/config/env";
-import { defaultProviderFromEnv } from "@/src/lib/ai/factory";
+import { defaultProviderFromEnv, providerFromDb } from "@/src/lib/ai/factory";
 
 export async function getSystemHealth() {
   const env = getEnv();
@@ -56,7 +56,13 @@ export async function getSystemHealth() {
   }
 
   try {
-    const model = await defaultProviderFromEnv().healthCheck();
+    const settings = await prisma.appSettings.findFirst({
+      select: { defaultChatProviderId: true }
+    });
+    const configuredProvider = settings?.defaultChatProviderId
+      ? await prisma.modelProvider.findUnique({ where: { id: settings.defaultChatProviderId } })
+      : null;
+    const model = await (configuredProvider ? providerFromDb(configuredProvider) : defaultProviderFromEnv()).healthCheck();
     checks.model = model.ok;
     messages.model = model.message;
   } catch (error) {
