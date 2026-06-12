@@ -17,6 +17,17 @@ Without Docker, the same pieces must be installed and maintained manually: Node.
 
 For a university server, use Docker Compose unless the IT policy does not allow Docker.
 
+## Choose Your Install Path
+
+| Situation | Recommended path |
+| --- | --- |
+| University gives you one server and allows Docker | [Dedicated University Server Flow](#dedicated-university-server-flow) |
+| Quick test or demo install | [Quick Docker Compose Install](#quick-docker-compose-install) |
+| Fully local AI with Ollama | [Optional Ollama Profile](#optional-ollama-profile) |
+| No Ollama, using LocalAI, llama.cpp, vLLM, or another OpenAI-compatible runtime | [Install Without Ollama](#install-without-ollama) |
+| University policy does not allow Docker | [Manual Install Without Docker](#manual-install-without-docker) |
+| Uploaded `.gguf` model files with LocalAI | [Optional Local Model Files](#optional-local-model-files) |
+
 ## Dedicated University Server Flow
 
 Use this flow when the university gives you one server and you want to deliver many chatbots to different university websites from the same TuwaiqX installation.
