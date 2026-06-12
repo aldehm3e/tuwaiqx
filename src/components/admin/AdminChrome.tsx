@@ -1,0 +1,106 @@
+import {
+  Activity,
+  Archive,
+  BookOpen,
+  Bot,
+  ChartNoAxesCombined,
+  ClipboardList,
+  Database,
+  FileText,
+  KeyRound,
+  LifeBuoy,
+  MessageSquare,
+  Settings,
+  ShieldCheck,
+  Ticket,
+  Users
+} from "lucide-react";
+import Link from "next/link";
+import { prisma } from "@/src/lib/db/prisma";
+
+const nav = [
+  { href: "/admin", label: "Dashboard", icon: Activity },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/models", label: "Models", icon: KeyRound },
+  { href: "/admin/bots", label: "Bots", icon: Bot },
+  { href: "/admin/knowledge", label: "Knowledge", icon: BookOpen },
+  { href: "/admin/test", label: "Test", icon: MessageSquare },
+  { href: "/admin/embed", label: "Embed", icon: FileText },
+  { href: "/admin/conversations", label: "Conversations", icon: ClipboardList },
+  { href: "/admin/tickets", label: "Tickets", icon: Ticket },
+  { href: "/admin/forms", label: "Forms", icon: Archive },
+  { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+  { href: "/admin/system", label: "System", icon: Database },
+  { href: "/admin/audit-log", label: "Audit Log", icon: ShieldCheck },
+  { href: "/admin/backups", label: "Backups", icon: LifeBuoy }
+];
+
+export async function AdminChrome({
+  children,
+  user
+}: {
+  children: React.ReactNode;
+  user: { email: string; name?: string | null; roles: string[] };
+}) {
+  const settings = await prisma.appSettings.findFirst();
+  const sourceCodeUrl = settings?.sourceCodeUrl || process.env.SOURCE_CODE_URL || "https://github.com/YOUR_ORG/tuwaiqx";
+
+  return (
+    <div className="min-h-screen bg-la-surface text-ink">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-la-line bg-white md:flex md:flex-col">
+        <div className="border-b border-la-line px-5 py-5">
+          <Link href="/admin" className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-la-green text-sm font-bold text-white">
+              TX
+            </span>
+            <span>
+              <span className="block text-base font-semibold">TuwaiqX Admin</span>
+              <span className="block text-xs text-slate-500">Self-hosted support AI</span>
+            </span>
+          </Link>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          {nav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-la-surface hover:text-ink"
+              >
+                <Icon aria-hidden="true" className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="border-t border-la-line p-4 text-xs leading-5 text-slate-500">
+          <div>{settings?.organizationName || "Organization"}</div>
+          <a className="font-medium text-la-green" href={sourceCodeUrl} rel="noreferrer" target="_blank">
+            Source Code
+          </a>
+        </div>
+      </aside>
+      <div className="md:pl-64">
+        <header className="sticky top-0 z-10 border-b border-la-line bg-white/95 px-4 py-3 backdrop-blur md:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold">{settings?.organizationName || "TuwaiqX"}</div>
+              <div className="text-xs text-slate-500">Ollama/local-first, no SaaS billing</div>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="hidden text-slate-500 sm:inline">{user.name || user.email}</span>
+              <form action="/api/admin/logout" method="post">
+                <button className="rounded-md border border-la-line px-3 py-2 text-sm font-semibold hover:bg-la-surface">
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </header>
+        <main className="px-4 py-6 md:px-8">{children}</main>
+      </div>
+    </div>
+  );
+}

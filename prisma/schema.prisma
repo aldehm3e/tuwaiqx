@@ -1,0 +1,412 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Direction {
+  ltr
+  rtl
+}
+
+enum ProviderType {
+  OLLAMA
+  OPENAI_COMPATIBLE
+  MOCK
+}
+
+enum DocumentStatus {
+  uploaded
+  parsing
+  parsed
+  indexing
+  indexed
+  failed
+  archived
+}
+
+enum DocumentSourceType {
+  upload
+  url
+  manual
+  faq
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+enum TicketStatus {
+  open
+  pending
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum KnowledgeStatus {
+  draft
+  approved
+  archived
+}
+
+enum FormFieldType {
+  text
+  email
+  phone
+  textarea
+  select
+  checkbox
+  date
+}
+
+enum SystemJobStatus {
+  queued
+  running
+  succeeded
+  failed
+}
+
+model AppSettings {
+  id                         String   @id @default(cuid())
+  organizationName           String
+  websiteUrl                 String
+  logoUrl                    String?
+  faviconUrl                 String?
+  primaryColor               String   @default("#0f7b55")
+  secondaryColor             String   @default("#2563eb")
+  defaultLanguage            String   @default("en")
+  defaultDirection           Direction @default(ltr)
+  supportEmail               String?
+  sourceCodeUrl              String   @default("https://github.com/YOUR_ORG/tuwaiqx")
+  privacyPolicyUrl           String?
+  termsUrl                   String?
+  dataRetentionDays          Int      @default(365)
+  defaultChatProviderId      String?
+  defaultEmbeddingProviderId String?
+  setupCompletedAt           DateTime?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model AdminUser {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  roles        UserRole[]
+  auditLogs    AuditLog[]
+  documents    Document[] @relation("DocumentCreatedBy")
+  tickets      Ticket[]   @relation("TicketAssignedTo")
+  ticketNotes  TicketNote[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  permissions Json
+  users       UserRole[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model AuditLog {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      AdminUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json       @default("{}")
+  ipAddress String?
+  createdAt DateTime   @default(now())
+}
+
+model ModelProvider {
+  id                 String       @id @default(cuid())
+  name               String
+  type               ProviderType
+  baseUrl            String?
+  apiKeyCiphertext   String?
+  chatModel          String?
+  embeddingModel     String?
+  configJson         Json         @default("{}")
+  isDefaultChat      Boolean      @default(false)
+  isDefaultEmbedding Boolean      @default(false)
+  isEnabled          Boolean      @default(true)
+  lastHealthStatus   String?
+  lastHealthAt       DateTime?
+  bots               Bot[]        @relation("BotChatProvider")
+  embeddingBots      Bot[]        @relation("BotEmbeddingProvider")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}
+
+model Bot {
+  id                  String         @id @default(cuid())
+  slug                String         @unique
+  name                String
+  description         String?
+  avatarUrl           String?
+  welcomeMessage      String         @default("Hello. How can I help?")
+  fallbackMessage     String         @default("I could not find that information in the approved knowledge base.")
+  systemPrompt        String         @default("You are a helpful organization assistant.")
+  primaryColor        String         @default("#0f7b55")
+  language            String         @default("en")
+  direction           Direction      @default(ltr)
+  strictMode          Boolean        @default(true)
+  showSources         Boolean        @default(true)
+  allowGeneralAnswer  Boolean        @default(false)
+  maxAnswerLength     Int            @default(800)
+  temperature         Float          @default(0.2)
+  modelProviderId     String?
+  embeddingProviderId String?
+  modelProvider       ModelProvider? @relation("BotChatProvider", fields: [modelProviderId], references: [id], onDelete: SetNull)
+  embeddingProvider   ModelProvider? @relation("BotEmbeddingProvider", fields: [embeddingProviderId], references: [id], onDelete: SetNull)
+  isActive            Boolean        @default(true)
+  isArchived          Boolean        @default(false)
+  position            String         @default("bottom-right")
+  quickActions        Json           @default("[]")
+  documents           Document[]
+  chunks              DocumentChunk[]
+  conversations       Conversation[]
+  tickets             Ticket[]
+  forms               Form[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+}
+
+model AllowedDomain {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id           String             @id @default(cuid())
+  botId        String?
+  bot          Bot?               @relation(fields: [botId], references: [id], onDelete: SetNull)
+  title        String
+  filename     String?
+  mimeType     String?
+  sizeBytes    Int                @default(0)
+  storageKey   String?
+  sourceType   DocumentSourceType
+  sourceUrl    String?
+  language     String?
+  status       DocumentStatus     @default(uploaded)
+  approved     Boolean            @default(true)
+  tags         Json               @default("[]")
+  errorMessage String?
+  createdById  String?
+  createdBy    AdminUser?         @relation("DocumentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  chunks       DocumentChunk[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  indexedAt    DateTime?
+}
+
+model DocumentChunk {
+  id           String   @id @default(cuid())
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  botId        String?
+  bot          Bot?     @relation(fields: [botId], references: [id], onDelete: SetNull)
+  chunkIndex   Int
+  content      String
+  contentHash  String
+  tokenCount   Int?
+  embedding    Unsupported("vector")?
+  metadataJson Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+  @@index([botId])
+}
+
+model KnowledgeEntry {
+  id        String          @id @default(cuid())
+  botId     String?
+  title     String
+  question  String?
+  content   String
+  sourceUrl String?
+  tags      Json            @default("[]")
+  status    KnowledgeStatus @default(approved)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model KnowledgeGap {
+  id             String    @id @default(cuid())
+  botId          String?
+  question       String
+  conversationId String?
+  resolved       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  botId       String
+  bot         Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  visitorId   String?
+  pageUrl     String?
+  reviewed    Boolean   @default(false)
+  handoffSuggested Boolean @default(false)
+  messages    Message[]
+  tickets     Ticket[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([botId])
+  @@index([createdAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  sourcesJson    Json         @default("[]")
+  feedback       String?
+  responseMs     Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model Ticket {
+  id              String         @id @default(cuid())
+  conversationId  String?
+  conversation    Conversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  botId           String?
+  bot             Bot?           @relation(fields: [botId], references: [id], onDelete: SetNull)
+  requesterName   String?
+  requesterEmail  String?
+  requesterPhone  String?
+  subject         String
+  message         String
+  status          TicketStatus   @default(open)
+  priority        TicketPriority @default(normal)
+  assignedToId    String?
+  assignedTo      AdminUser?     @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notes           TicketNote[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TicketNote {
+  id        String     @id @default(cuid())
+  ticketId  String
+  ticket    Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    AdminUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  note      String
+  createdAt DateTime   @default(now())
+}
+
+model Form {
+  id                String           @id @default(cuid())
+  botId             String?
+  bot               Bot?             @relation(fields: [botId], references: [id], onDelete: SetNull)
+  slug              String           @unique
+  name              String
+  description       String?
+  submitLabel       String           @default("Submit")
+  webhookUrl        String?
+  emailNotification String?
+  isActive          Boolean          @default(true)
+  fields            FormField[]
+  submissions       FormSubmission[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model FormField {
+  id          String        @id @default(cuid())
+  formId      String
+  form        Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  label       String
+  name        String
+  type        FormFieldType
+  required    Boolean       @default(false)
+  optionsJson Json          @default("[]")
+  order       Int           @default(0)
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  dataJson  Json
+  createdAt DateTime @default(now())
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  secret    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  prefix      String
+  keyHash     String
+  permissions Json      @default("[]")
+  lastUsedAt  DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SystemJob {
+  id          String          @id @default(cuid())
+  type        String
+  status      SystemJobStatus @default(queued)
+  entityId    String?
+  progress    Int             @default(0)
+  errorMessage String?
+  metadata    Json            @default("{}")
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
