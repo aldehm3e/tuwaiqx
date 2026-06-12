@@ -7,6 +7,8 @@ const envSchema = z.object({
   REDIS_URL: z.string().default("redis://localhost:6379"),
   STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
   STORAGE_PATH: z.string().default("./uploads"),
+  MODEL_STORAGE_PATH: z.string().default("./models"),
+  MAX_MODEL_UPLOAD_MB: z.coerce.number().int().positive().default(8000),
   S3_ENDPOINT: z.string().optional().default(""),
   S3_ACCESS_KEY: z.string().optional().default(""),
   S3_SECRET_KEY: z.string().optional().default(""),
@@ -16,6 +18,7 @@ const envSchema = z.object({
   OLLAMA_BASE_URL: z.string().url().default("http://localhost:11434"),
   OLLAMA_CHAT_MODEL: z.string().default("llama3.1"),
   OLLAMA_EMBEDDING_MODEL: z.string().default("nomic-embed-text"),
+  LOCAL_RUNTIME_BASE_URL: z.string().url().default("http://localai:8080/v1"),
   OPENAI_COMPATIBLE_BASE_URL: z.string().optional().default(""),
   OPENAI_COMPATIBLE_API_KEY: z.string().optional().default(""),
   OPENAI_COMPATIBLE_CHAT_MODEL: z.string().optional().default(""),
@@ -30,7 +33,7 @@ const envSchema = z.object({
     .optional()
     .default("true")
     .transform((value) => value !== "false"),
-  SOURCE_CODE_URL: z.string().url().default("https://github.com/YOUR_ORG/tuwaiqx")
+  SOURCE_CODE_URL: z.string().url().default("https://github.com/aldehm3e/tuwaiqx")
 });
 
 export type TuwaiqXEnv = z.infer<typeof envSchema>;

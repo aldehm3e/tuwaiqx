@@ -1,13 +1,55 @@
-import { ProviderForm } from "@/src/components/admin/Forms";
-import { Badge, PageHeader, Panel } from "@/src/components/admin/Ui";
+import { LocalModelUploadForm, ProviderForm } from "@/src/components/admin/Forms";
+import { DeleteAction } from "@/src/components/admin/DeleteAction";
+import { ProviderActions } from "@/src/components/admin/ProviderActions";
+import { Badge, EmptyState, PageHeader, Panel } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
+import { localAiConfigKey, localAiRuntimeModelName, supportsLocalAiConfig } from "@/src/lib/models/storage";
+
+function formatBytes(value: bigint) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes)) {
+    return `${value.toString()} bytes`;
+  }
+
+  const units = ["bytes", "KB", "MB", "GB", "TB"];
+  let size = bytes;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+
+  return unit === 0 ? `${size} ${units[unit]}` : `${size.toFixed(1)} ${units[unit]}`;
+}
+
+function serverModelPath(root: string, storageKey: string) {
+  return `${root.replace(/\\/g, "/").replace(/\/$/, "")}/${storageKey}`;
+}
+
+function shortHash(hash: string) {
+  return `${hash.slice(0, 12)}...${hash.slice(-8)}`;
+}
 
 export default async function ModelsPage() {
-  const providers = await prisma.modelProvider.findMany({ orderBy: { createdAt: "desc" } });
+  const [providers, localModels, settings] = await Promise.all([
+    prisma.modelProvider.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.localModelFile.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.appSettings.findFirst({
+      select: {
+        defaultChatProviderId: true,
+        defaultEmbeddingProviderId: true
+      }
+    })
+  ]);
+  const defaultBaseUrl = process.env.OLLAMA_BASE_URL || "http://ollama:11434";
+  const defaultChatModel = process.env.OLLAMA_CHAT_MODEL || "llama3.1";
+  const defaultEmbeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text";
+  const modelStoragePath = process.env.MODEL_STORAGE_PATH || "./models";
+  const localRuntimeBaseUrl = process.env.LOCAL_RUNTIME_BASE_URL || "http://localai:8080/v1";
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Model providers" description="Configure Ollama/local models by default, or optional OpenAI-compatible endpoints through a clean adapter interface." />
+      <PageHeader title="Model providers" description="Use Ollama, connect an OpenAI-compatible endpoint, or manage local model files for a server-side runtime." />
       <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
         <Panel>
           <div className="overflow-x-auto">
@@ -16,9 +58,11 @@ export default async function ModelsPage() {
                 <tr className="border-b border-la-line">
                   <th className="py-3 pr-3">Name</th>
                   <th className="py-3 pr-3">Type</th>
+                  <th className="py-3 pr-3">Base URL</th>
                   <th className="py-3 pr-3">Models</th>
                   <th className="py-3 pr-3">Defaults</th>
                   <th className="py-3 pr-3">Health</th>
+                  <th className="py-3 pr-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -26,14 +70,22 @@ export default async function ModelsPage() {
                   <tr key={provider.id} className="border-b border-la-line last:border-0">
                     <td className="py-3 pr-3 font-medium">{provider.name}</td>
                     <td className="py-3 pr-3">{provider.type}</td>
-                    <td className="py-3 pr-3 text-slate-600">{provider.chatModel || "chat"} / {provider.embeddingModel || "embedding"}</td>
+                    <td className="py-3 pr-3 text-xs text-slate-600">{provider.baseUrl || "none"}</td>
+                    <td className="py-3 pr-3 text-slate-600">
+                      {provider.chatModel || "chat"} / {provider.embeddingModel || "embedding"}
+                    </td>
                     <td className="py-3 pr-3">
                       <div className="flex gap-2">
-                        {provider.isDefaultChat ? <Badge tone="good">chat</Badge> : null}
-                        {provider.isDefaultEmbedding ? <Badge tone="good">embed</Badge> : null}
+                        {settings?.defaultChatProviderId === provider.id ? <Badge tone="good">chat</Badge> : null}
+                        {settings?.defaultEmbeddingProviderId === provider.id ? <Badge tone="good">embed</Badge> : null}
                       </div>
                     </td>
-                    <td className="py-3 pr-3"><Badge tone={provider.lastHealthStatus === "ok" ? "good" : "neutral"}>{provider.lastHealthStatus || "not tested"}</Badge></td>
+                    <td className="py-3 pr-3">
+                      <Badge tone={provider.lastHealthStatus === "ok" ? "good" : "neutral"}>{provider.lastHealthStatus || "not tested"}</Badge>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <ProviderActions id={provider.id} name={provider.name} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -42,10 +94,81 @@ export default async function ModelsPage() {
         </Panel>
         <Panel>
           <h2 className="mb-4 text-lg font-semibold">Add provider</h2>
-          <ProviderForm />
+          <ProviderForm
+            defaultBaseUrl={defaultBaseUrl}
+            defaultChatModel={defaultChatModel}
+            defaultEmbeddingModel={defaultEmbeddingModel}
+          />
+        </Panel>
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
+        <Panel>
+          <div className="mb-4 flex flex-col gap-1">
+            <h2 className="text-lg font-semibold">Uploaded local model files</h2>
+            <p className="text-sm leading-6 text-slate-600">
+              Stored under <code className="rounded bg-la-surface px-1 py-0.5">{modelStoragePath}</code> for local runtimes that load model files from disk.
+            </p>
+          </div>
+          {localModels.length === 0 ? (
+            <EmptyState title="No local model files" body="Upload chat or embedding model files that a local runtime can load from the server filesystem." />
+          ) : (
+            <div className="divide-y divide-la-line">
+              {localModels.map((model) => (
+                <div key={model.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold text-ink">{model.name}</h3>
+                        <Badge>{model.kind}</Badge>
+                        <Badge tone={model.status === "ready" ? "good" : "neutral"}>{model.status}</Badge>
+                      </div>
+                      <div className="mt-2 text-sm text-slate-600">
+                        {model.filename}
+                        <span className="text-xs uppercase text-slate-500"> - {model.format} - {formatBytes(model.sizeBytes)}</span>
+                      </div>
+                      {model.runtimeHint ? <div className="mt-1 text-xs text-slate-500">{model.runtimeHint}</div> : null}
+                      <code className="mt-3 block max-w-full overflow-x-auto rounded-md bg-la-surface px-2 py-1.5 text-xs text-slate-700">
+                        {serverModelPath(modelStoragePath, model.storageKey)}
+                      </code>
+                      {supportsLocalAiConfig(model.format) ? (
+                        <div className="mt-3 grid gap-2 text-xs text-slate-600 md:grid-cols-2">
+                          <div>
+                            <span className="block font-medium text-ink">LocalAI model</span>
+                            <code className="mt-1 block overflow-x-auto rounded bg-la-surface px-2 py-1 text-slate-700">
+                              {localAiRuntimeModelName({ id: model.id, kind: model.kind })}
+                            </code>
+                          </div>
+                          <div>
+                            <span className="block font-medium text-ink">LocalAI config</span>
+                            <code className="mt-1 block overflow-x-auto rounded bg-la-surface px-2 py-1 text-slate-700">
+                              {serverModelPath(modelStoragePath, localAiConfigKey(model.id))}
+                            </code>
+                          </div>
+                        </div>
+                      ) : null}
+                      <div className="mt-2 text-xs text-slate-500" title={model.sha256}>
+                        SHA-256 {shortHash(model.sha256)}
+                      </div>
+                    </div>
+                    <DeleteAction
+                      action={`/api/admin/model-files/${model.id}`}
+                      confirmMessage={`Delete ${model.name}? The model file will be removed from server storage.`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+        <Panel>
+          <h2 className="mb-4 text-lg font-semibold">Upload local model</h2>
+          <div className="mb-4 rounded-md border border-la-line bg-la-surface p-3 text-sm leading-6 text-slate-600">
+            Start the optional LocalAI runtime with <code className="rounded bg-white px-1 py-0.5">docker compose --profile local-models up -d</code>, then add an
+            OpenAI-compatible/runtime provider at <code className="rounded bg-white px-1 py-0.5">{localRuntimeBaseUrl}</code>.
+          </div>
+          <LocalModelUploadForm />
         </Panel>
       </div>
     </div>
   );
 }
-

@@ -38,17 +38,29 @@ export function SetupForm() {
         <Field label="Secondary color">
           <input className={inputClass} name="secondaryColor" defaultValue="#2563eb" />
         </Field>
-        <Field label="Ollama base URL">
-          <input className={inputClass} name="ollamaBaseUrl" defaultValue="http://ollama:11434" />
+        <Field label="Provider name">
+          <input className={inputClass} name="providerName" defaultValue="Ollama Local" />
         </Field>
-        <Field label="Ollama chat model">
-          <input className={inputClass} name="ollamaChatModel" defaultValue="llama3.1" />
+        <Field label="Provider type">
+          <select className={inputClass} name="providerType" defaultValue="OLLAMA">
+            <option value="OLLAMA">Ollama/local</option>
+            <option value="OPENAI_COMPATIBLE">OpenAI-compatible/runtime</option>
+            <option value="MOCK">Mock</option>
+          </select>
         </Field>
-        <Field label="Ollama embedding model">
-          <input className={inputClass} name="ollamaEmbeddingModel" defaultValue="nomic-embed-text" />
+        <Field label="Provider base URL">
+          <input className={inputClass} name="providerBaseUrl" defaultValue="http://ollama:11434" />
+        </Field>
+        <Field label="API key">
+          <input className={inputClass} name="providerApiKey" type="password" autoComplete="off" />
+        </Field>
+        <Field label="Chat model">
+          <input className={inputClass} name="providerChatModel" defaultValue="llama3.1" />
+        </Field>
+        <Field label="Embedding model">
+          <input className={inputClass} name="providerEmbeddingModel" defaultValue="nomic-embed-text" />
         </Field>
       </div>
     </SmartForm>
   );
 }
-

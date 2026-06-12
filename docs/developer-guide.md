@@ -29,6 +29,8 @@
 - `PUT /api/admin/settings`
 - `POST /api/admin/users`
 - `POST /api/admin/providers`
+- `POST /api/admin/model-files`
+- `DELETE /api/admin/model-files/:id`
 - `POST /api/admin/bots`
 - `PUT /api/admin/bots/:id`
 - `DELETE /api/admin/bots/:id`
@@ -40,4 +42,3 @@
 - `POST /api/admin/forms`
 
 All admin routes require local admin authentication and permission checks.
-

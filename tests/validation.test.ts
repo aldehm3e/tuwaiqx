@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { botSchema, chatSchema, setupSchema } from "../src/lib/validation/schemas";
+import { botSchema, chatSchema, localModelUploadSchema, setupSchema } from "../src/lib/validation/schemas";
 
 describe("validation schemas", () => {
   it("rejects invalid bot slugs", () => {
@@ -32,5 +32,13 @@ describe("validation schemas", () => {
     });
     expect(parsed.defaultDirection).toBe("ltr");
   });
-});
 
+  it("accepts local model upload metadata", () => {
+    const parsed = localModelUploadSchema.parse({
+      name: "Qwen 2.5 0.5B",
+      kind: "chat",
+      runtimeHint: "Loaded by a local runtime"
+    });
+    expect(parsed.kind).toBe("chat");
+  });
+});

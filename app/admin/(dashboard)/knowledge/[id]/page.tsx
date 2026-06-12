@@ -1,3 +1,4 @@
+import { DeleteAction } from "@/src/components/admin/DeleteAction";
 import { Badge, PageHeader, Panel } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
 
@@ -10,7 +11,17 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <PageHeader title={document.title} description={document.sourceUrl || document.filename || "Knowledge document"} />
+      <PageHeader
+        title={document.title}
+        description={document.sourceUrl || document.filename || "Knowledge document"}
+        action={
+          <DeleteAction
+            action={`/api/admin/documents/${document.id}`}
+            confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
+            redirectTo="/admin/knowledge"
+          />
+        }
+      />
       <Panel>
         <div className="grid gap-4 md:grid-cols-4">
           <div><div className="text-xs text-slate-500">Status</div><Badge tone={document.status === "indexed" ? "good" : document.status === "failed" ? "danger" : "warn"}>{document.status}</Badge></div>

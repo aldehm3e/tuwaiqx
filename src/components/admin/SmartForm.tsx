@@ -14,15 +14,14 @@ type SmartFormProps = {
   className?: string;
 };
 
-function formDataToJson(formData: FormData) {
+function formDataToJson(form: HTMLFormElement) {
+  const formData = new FormData(form);
   const payload: Record<string, FormDataEntryValue | boolean> = {};
   formData.forEach((value, key) => {
     payload[key] = value;
   });
-  for (const element of document.querySelectorAll<HTMLInputElement>("input[type='checkbox'][name]")) {
-    if (element.form && new FormData(element.form) === formData) {
-      payload[element.name] = element.checked;
-    }
+  for (const element of form.querySelectorAll<HTMLInputElement>("input[type='checkbox'][name]")) {
+    payload[element.name] = element.checked;
   }
   return payload;
 }
@@ -52,7 +51,7 @@ export function SmartForm({
         const response = await fetch(action, {
           method,
           headers: encType === "json" ? { "content-type": "application/json" } : undefined,
-          body: encType === "json" ? JSON.stringify(Object.fromEntries(formData.entries())) : formData
+          body: encType === "json" ? JSON.stringify(formDataToJson(form)) : formData
         });
 
         const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
@@ -80,4 +79,3 @@ export function SmartForm({
     </form>
   );
 }
-

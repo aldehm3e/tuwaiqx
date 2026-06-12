@@ -42,9 +42,8 @@ export async function GET(request: Request) {
       quickActions: bot.quickActions,
       showSources: bot.showSources,
       organizationName: settings?.organizationName || "Organization",
-      sourceCodeUrl: settings?.sourceCodeUrl || process.env.SOURCE_CODE_URL || "https://github.com/YOUR_ORG/tuwaiqx"
+      sourceCodeUrl: settings?.sourceCodeUrl || process.env.SOURCE_CODE_URL || "https://github.com/aldehm3e/tuwaiqx"
     },
     { headers }
   );
 }
-

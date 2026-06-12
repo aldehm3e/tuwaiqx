@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { SetupForm } from "@/src/components/admin/SetupForm";
 import { Panel } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
@@ -13,8 +14,16 @@ export default async function SetupPage() {
     <main className="min-h-screen bg-la-surface px-4 py-10">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-la-green text-base font-bold text-white">
-            TX
+          <div className="mb-5 flex h-16 w-24 items-center justify-center rounded-lg border border-la-line bg-white p-2 shadow-sm">
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain"
+              height={48}
+              priority
+              src="/tuwaiqx-icon.png"
+              width={116}
+            />
           </div>
           <h1 className="text-3xl font-semibold text-ink">Set up TuwaiqX</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">

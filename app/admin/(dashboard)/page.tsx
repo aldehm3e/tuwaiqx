@@ -4,6 +4,10 @@ import { Badge, EmptyState, PageHeader, Panel, StatCard, buttonClass, secondaryB
 import { prisma } from "@/src/lib/db/prisma";
 import { getSystemHealth } from "@/src/lib/system/health";
 
+function quickActions(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 export default async function DashboardPage() {
   const [bots, documents, conversations, tickets, gaps, recentJobs, health] = await Promise.all([
     prisma.bot.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
@@ -84,7 +88,21 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold">Test bot</h2>
             <p className="text-sm text-slate-500">Ask against indexed, approved knowledge and inspect returned sources.</p>
           </div>
-          {bots.length ? <BotTester bots={bots.map((bot) => ({ id: bot.id, slug: bot.slug, name: bot.name }))} /> : <EmptyState title="Create a bot first" body="A bot connects model settings, prompts, knowledge, and the embeddable widget." />}
+          {bots.length ? (
+            <BotTester
+              bots={bots.map((bot) => ({
+                id: bot.id,
+                slug: bot.slug,
+                name: bot.name,
+                welcomeMessage: bot.welcomeMessage,
+                language: bot.language,
+                direction: bot.direction,
+                quickActions: quickActions(bot.quickActions)
+              }))}
+            />
+          ) : (
+            <EmptyState title="Create a bot first" body="A bot connects model settings, prompts, knowledge, and the embeddable widget." />
+          )}
         </Panel>
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
@@ -123,4 +141,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-

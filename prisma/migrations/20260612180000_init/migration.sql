@@ -42,7 +42,7 @@ CREATE TABLE "AppSettings" (
     "defaultLanguage" TEXT NOT NULL DEFAULT 'en',
     "defaultDirection" "Direction" NOT NULL DEFAULT 'ltr',
     "supportEmail" TEXT,
-    "sourceCodeUrl" TEXT NOT NULL DEFAULT 'https://github.com/YOUR_ORG/tuwaiqx',
+    "sourceCodeUrl" TEXT NOT NULL DEFAULT 'https://github.com/aldehm3e/tuwaiqx',
     "privacyPolicyUrl" TEXT,
     "termsUrl" TEXT,
     "dataRetentionDays" INTEGER NOT NULL DEFAULT 365,

@@ -11,9 +11,12 @@ export const setupSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0f7b55"),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#2563eb"),
   allowedDomains: z.string().optional().default(""),
-  ollamaBaseUrl: z.string().url().default("http://ollama:11434"),
-  ollamaChatModel: z.string().min(1).default("llama3.1"),
-  ollamaEmbeddingModel: z.string().min(1).default("nomic-embed-text")
+  providerName: z.string().min(2).max(120).default("Ollama Local"),
+  providerType: z.enum(["OLLAMA", "OPENAI_COMPATIBLE", "MOCK"]).default("OLLAMA"),
+  providerBaseUrl: z.string().url().optional().or(z.literal("")).default("http://ollama:11434"),
+  providerApiKey: z.string().optional().or(z.literal("")).default(""),
+  providerChatModel: z.string().optional().or(z.literal("")).default("llama3.1"),
+  providerEmbeddingModel: z.string().optional().or(z.literal("")).default("nomic-embed-text")
 });
 
 export const loginSchema = z.object({
@@ -48,6 +51,12 @@ export const providerSchema = z.object({
   isDefaultChat: z.coerce.boolean().default(false),
   isDefaultEmbedding: z.coerce.boolean().default(false),
   isEnabled: z.coerce.boolean().default(true)
+});
+
+export const localModelUploadSchema = z.object({
+  name: z.string().min(2).max(160),
+  kind: z.enum(["chat", "embedding"]),
+  runtimeHint: z.string().max(500).optional().or(z.literal(""))
 });
 
 export const botSchema = z.object({
@@ -128,4 +137,3 @@ export const formSchema = z.object({
   webhookUrl: z.string().url().optional().or(z.literal("")),
   emailNotification: z.string().email().optional().or(z.literal(""))
 });
-

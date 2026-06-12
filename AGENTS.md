@@ -9,7 +9,7 @@ This repository is **TuwaiqX**.
 - Package name: `tuwaiqx`
 - Docker project name: `tuwaiqx`
 - Database name/user for Docker installs: `tuwaiqx`
-- Default source URL: `https://github.com/YOUR_ORG/tuwaiqx`
+- Default source URL: `https://github.com/aldehm3e/tuwaiqx`
 - Main license: `AGPL-3.0-or-later`
 
 Do not introduce any previous project name or alternate product branding anywhere in code, documentation, UI, seed data, scripts, package metadata, Docker config, or generated examples.
@@ -23,7 +23,7 @@ TuwaiqX is not a SaaS product, not a hosted subscription platform, and not an MV
 ## Expected User Flow
 
 ```bash
-git clone https://github.com/YOUR_ORG/tuwaiqx.git
+git clone https://github.com/aldehm3e/tuwaiqx.git
 cd tuwaiqx
 cp .env.example .env
 docker compose up -d

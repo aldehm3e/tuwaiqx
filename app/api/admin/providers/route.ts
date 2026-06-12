@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       if (input.isDefaultEmbedding) {
         await tx.modelProvider.updateMany({ data: { isDefaultEmbedding: false } });
       }
-      return tx.modelProvider.create({
+      const savedProvider = await tx.modelProvider.create({
         data: {
           name: input.name,
           type: input.type,
@@ -45,6 +45,19 @@ export async function POST(request: Request) {
           lastHealthAt: new Date()
         }
       });
+
+      if (input.isDefaultChat) {
+        await tx.appSettings.updateMany({
+          data: { defaultChatProviderId: savedProvider.id }
+        });
+      }
+      if (input.isDefaultEmbedding) {
+        await tx.appSettings.updateMany({
+          data: { defaultEmbeddingProviderId: savedProvider.id }
+        });
+      }
+
+      return savedProvider;
     });
 
     await auditLog({
@@ -59,4 +72,3 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
-

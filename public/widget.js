@@ -45,7 +45,8 @@
       "<style>" +
       ":host{all:initial;--la-primary:" + primary + ";font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#17211d}" +
       ".la-wrap{position:fixed;z-index:2147483647;bottom:20px;" + side + ":20px;direction:" + (cfg.direction || "ltr") + "}" +
-      ".la-button{width:58px;height:58px;border:0;border-radius:18px;background:var(--la-primary);color:white;box-shadow:0 16px 40px rgba(23,33,29,.2);cursor:pointer;font-weight:800;font-size:18px}" +
+      ".la-button{display:flex;align-items:center;justify-content:center;width:76px;height:54px;border:1px solid rgba(15,123,85,.22);border-radius:18px;background:#fff;box-shadow:0 16px 40px rgba(23,33,29,.2);cursor:pointer;padding:7px 8px}" +
+      ".la-button img{display:block;width:100%;height:100%;object-fit:contain}" +
       ".la-panel{display:" + (state.open ? "flex" : "none") + ";flex-direction:column;width:min(380px,calc(100vw - 32px));height:min(620px,calc(100vh - 100px));margin-bottom:12px;border:1px solid #dbe4df;border-radius:10px;background:white;box-shadow:0 24px 70px rgba(23,33,29,.18);overflow:hidden}" +
       ".la-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #dbe4df;background:#f7faf8}" +
       ".la-title{font-weight:700;font-size:14px}.la-org{font-size:12px;color:#64736d;margin-top:2px}.la-close{border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:#64736d}" +
@@ -60,8 +61,9 @@
   }
 
   function renderMessage(message) {
+    var cfg = state.config || {};
     var sources = "";
-    if (message.role === "assistant" && message.sources && message.sources.length) {
+    if (cfg.showSources !== false && message.role === "assistant" && message.sources && message.sources.length) {
       sources =
         '<div class="la-sources"><strong>Sources</strong>' +
         message.sources
@@ -100,7 +102,7 @@
       organizationName: "Organization",
       welcomeMessage: "Hello. How can I help?",
       quickActions: [],
-      sourceCodeUrl: "https://github.com/YOUR_ORG/tuwaiqx"
+      sourceCodeUrl: "https://github.com/aldehm3e/tuwaiqx"
     };
     var messages = state.messages.length
       ? state.messages
@@ -114,7 +116,7 @@
       escapeHtml(cfg.name || "TuwaiqX") +
       '</div><div class="la-org">' +
       escapeHtml(cfg.organizationName || "") +
-      '</div></div><button class="la-close" type="button" aria-label="Close">×</button></header>' +
+      '</div></div><button class="la-close" type="button" aria-label="Close">&times;</button></header>' +
       '<div class="la-messages">' +
       messages.map(renderMessage).join("") +
       (state.loading ? '<div class="la-msg la-assistant">...</div>' : "") +
@@ -127,9 +129,7 @@
         .join("") +
       "</div>" +
       '<form class="la-form"><input class="la-input" aria-label="Message" autocomplete="off" placeholder="Type your question" /><button class="la-send" type="submit">Send</button></form>' +
-      '<footer class="la-foot">Powered by TuwaiqX · <a target="_blank" rel="noreferrer" href="' +
-      escapeHtml(cfg.sourceCodeUrl || "#") +
-      '">Source Code</a></footer></section><button class="la-button" type="button" aria-label="Open chat">TX</button></div>';
+      '<footer class="la-foot">Powered by TuwaiqX</footer></section><button class="la-button" type="button" aria-label="Open chat"><img src="' + escapeHtml(baseUrl + "/tuwaiqx-icon.png") + '" alt="" /></button></div>';
 
     root.querySelector(".la-button").addEventListener("click", function () {
       state.open = true;
