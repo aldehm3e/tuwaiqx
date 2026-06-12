@@ -259,6 +259,23 @@ TuwaiqX can run without Ollama if you provide another chat and embedding provide
 - an OpenAI-compatible API endpoint on another university server
 - an optional external API provider, if the organization policy allows it
 
+The runtime can be installed on the same physical server as TuwaiqX. It does not have to be a separate machine.
+
+Common same-server layouts:
+
+```text
+Docker TuwaiqX + Docker LocalAI:
+TuwaiqX provider base URL = http://localai:8080/v1
+
+Manual TuwaiqX + manual LocalAI/llama.cpp/vLLM:
+TuwaiqX provider base URL = http://127.0.0.1:<runtime-port>/v1
+
+Docker TuwaiqX + runtime installed directly on the host OS:
+Prefer putting the runtime in Docker too, or expose the runtime on a private host/network address reachable from the TuwaiqX container.
+```
+
+Do not expose the runtime port publicly. Keep it private to the server or university network, then expose only TuwaiqX through HTTPS.
+
 ### Docker Compose Without Ollama
 
 Do not start the Ollama profile. Start only the main stack:
@@ -292,6 +309,8 @@ Then start LocalAI instead of Ollama:
 docker compose --profile local-models up -d --build
 ```
 
+In this layout, LocalAI and TuwaiqX run on the same server and the same Docker network. Use `http://localai:8080/v1` inside TuwaiqX, not `localhost`, because `localhost` from inside the TuwaiqX container means the TuwaiqX container itself.
+
 Open `/admin/setup` and choose:
 
 ```text
@@ -314,6 +333,14 @@ OPENAI_COMPATIBLE_BASE_URL=http://127.0.0.1:8080/v1
 OPENAI_COMPATIBLE_API_KEY=
 OPENAI_COMPATIBLE_CHAT_MODEL=your-chat-model
 OPENAI_COMPATIBLE_EMBEDDING_MODEL=your-embedding-model
+```
+
+Examples:
+
+```text
+LocalAI on the same server: http://127.0.0.1:8080/v1
+llama.cpp server on the same server: http://127.0.0.1:<port>/v1
+vLLM on the same server: http://127.0.0.1:8000/v1
 ```
 
 Then restart TuwaiqX:
