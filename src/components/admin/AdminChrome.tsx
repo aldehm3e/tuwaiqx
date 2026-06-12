@@ -15,6 +15,7 @@ import {
   Ticket,
   Users
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/src/lib/db/prisma";
 
@@ -44,19 +45,26 @@ export async function AdminChrome({
   user: { email: string; name?: string | null; roles: string[] };
 }) {
   const settings = await prisma.appSettings.findFirst();
-  const sourceCodeUrl = settings?.sourceCodeUrl || process.env.SOURCE_CODE_URL || "https://github.com/YOUR_ORG/tuwaiqx";
+  const sourceCodeUrl = settings?.sourceCodeUrl || process.env.SOURCE_CODE_URL || "https://github.com/aldehm3e/tuwaiqx";
 
   return (
     <div className="min-h-screen bg-la-surface text-ink">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-la-line bg-white md:flex md:flex-col">
         <div className="border-b border-la-line px-5 py-5">
           <Link href="/admin" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-la-green text-sm font-bold text-white">
-              TX
+            <span className="flex h-10 w-16 items-center justify-center rounded-lg border border-la-line bg-white p-1 shadow-sm">
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                height={34}
+                priority
+                src="/tuwaiqx-icon.png"
+                width={82}
+              />
             </span>
             <span>
               <span className="block text-base font-semibold">TuwaiqX Admin</span>
-              <span className="block text-xs text-slate-500">Self-hosted support AI</span>
             </span>
           </Link>
         </div>
@@ -87,7 +95,6 @@ export async function AdminChrome({
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-sm font-semibold">{settings?.organizationName || "TuwaiqX"}</div>
-              <div className="text-xs text-slate-500">Ollama/local-first, no SaaS billing</div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <span className="hidden text-slate-500 sm:inline">{user.name || user.email}</span>

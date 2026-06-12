@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeleteAction } from "@/src/components/admin/DeleteAction";
 import { Badge, EmptyState, PageHeader, Panel, buttonClass, secondaryButtonClass } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
 
@@ -35,6 +36,7 @@ export default async function KnowledgePage() {
                   <th className="py-3 pr-3">Status</th>
                   <th className="py-3 pr-3">Chunks</th>
                   <th className="py-3 pr-3">Indexed</th>
+                  <th className="py-3 pr-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -49,6 +51,13 @@ export default async function KnowledgePage() {
                     <td className="py-3 pr-3"><Badge tone={document.status === "indexed" ? "good" : document.status === "failed" ? "danger" : "warn"}>{document.status}</Badge></td>
                     <td className="py-3 pr-3">{document._count.chunks}</td>
                     <td className="py-3 pr-3 text-slate-500">{document.indexedAt?.toLocaleString() || "Not yet"}</td>
+                    <td className="py-3 pr-3">
+                      <DeleteAction
+                        action={`/api/admin/documents/${document.id}`}
+                        label="Delete"
+                        confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -59,4 +68,3 @@ export default async function KnowledgePage() {
     </div>
   );
 }
-

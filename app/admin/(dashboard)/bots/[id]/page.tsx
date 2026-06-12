@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { BotTester } from "@/src/components/admin/BotTester";
+import { DeleteAction } from "@/src/components/admin/DeleteAction";
 import { Badge, PageHeader, Panel, secondaryButtonClass } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
+
+function quickActions(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
 
 export default async function BotDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,7 +21,16 @@ export default async function BotDetailPage({ params }: { params: Promise<{ id: 
       <PageHeader
         title={bot.name}
         description={bot.description || `Widget slug: ${bot.slug}`}
-        action={<Link className={secondaryButtonClass} href="/admin/embed">Embed code</Link>}
+        action={
+          <>
+            <Link className={secondaryButtonClass} href="/admin/embed">Embed code</Link>
+            <DeleteAction
+              action={`/api/admin/bots/${bot.id}`}
+              confirmMessage={`Delete ${bot.name}? Conversations for this bot will also be removed.`}
+              redirectTo="/admin/bots"
+            />
+          </>
+        }
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
         <Panel>
@@ -36,7 +50,19 @@ export default async function BotDetailPage({ params }: { params: Promise<{ id: 
         </Panel>
         <Panel>
           <h2 className="mb-4 text-lg font-semibold">Test bot</h2>
-          <BotTester bots={[{ id: bot.id, slug: bot.slug, name: bot.name }]} />
+          <BotTester
+            bots={[
+              {
+                id: bot.id,
+                slug: bot.slug,
+                name: bot.name,
+                welcomeMessage: bot.welcomeMessage,
+                language: bot.language,
+                direction: bot.direction,
+                quickActions: quickActions(bot.quickActions)
+              }
+            ]}
+          />
         </Panel>
       </div>
     </div>

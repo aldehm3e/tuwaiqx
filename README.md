@@ -10,6 +10,7 @@ Auther: Eng. Abdulrahman Alsaedi
 
 - Next.js admin dashboard with first-run setup, local admin auth, RBAC, audit log, and system health.
 - Ollama/local model support by default, plus optional OpenAI-compatible model providers.
+- Local model file upload and deletion for self-hosted runtimes that load downloaded model files from disk.
 - Clean provider interface for adding more model adapters.
 - Document upload and indexing for PDF, DOCX, TXT, Markdown, HTML, CSV, XLSX, JSON, manual text, FAQ, and website crawling.
 - Retrieval-augmented chat with pgvector search, full-text fallback, strict mode, citations, conversation logs, feedback, and knowledge gap tracking.
@@ -25,12 +26,12 @@ TuwaiqX is licensed under GNU AGPL-3.0-or-later for the main application.
 - Docker and Docker Compose
 - Node.js 20 for local development
 - PostgreSQL with pgvector, Redis, and local or S3-compatible storage
-- Optional: Ollama for fully local model execution
+- Optional: Ollama, LocalAI, llama.cpp server, vLLM, or another local runtime for fully local model execution
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_ORG/tuwaiqx.git
+git clone https://github.com/aldehm3e/tuwaiqx.git
 cd tuwaiqx
 cp .env.example .env
 docker compose up -d
@@ -49,6 +50,7 @@ Then:
 3. Connect a model provider:
    - Ollama/local model by default
    - OpenAI-compatible API endpoint optionally
+   - Uploaded local model files loaded by a local runtime
    - Other provider adapters through a clean interface
 4. Upload documents.
 5. Wait for indexing.
@@ -65,6 +67,12 @@ docker compose exec tuwaiqx-ollama ollama pull llama3.1
 docker compose exec tuwaiqx-ollama ollama pull nomic-embed-text
 ```
 
+To start the optional LocalAI runtime for uploaded `.gguf` files:
+
+```bash
+docker compose --profile local-models up -d
+```
+
 ## Configuration
 
 Use `.env.example` as the baseline. The default database settings are:
@@ -72,7 +80,7 @@ Use `.env.example` as the baseline. The default database settings are:
 ```env
 APP_NAME=TuwaiqX
 DATABASE_URL=postgresql://tuwaiqx:tuwaiqx@postgres:5432/tuwaiqx
-SOURCE_CODE_URL=https://github.com/YOUR_ORG/tuwaiqx
+SOURCE_CODE_URL=https://github.com/aldehm3e/tuwaiqx
 ```
 
 ## Database
@@ -107,6 +115,8 @@ OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 ```
 
 Optional OpenAI-compatible endpoints are configured in the admin dashboard or `.env`. TuwaiqX does not hardcode one paid vendor.
+
+Downloaded model files can be uploaded in `/admin/models`. TuwaiqX stores them under `MODEL_STORAGE_PATH` so a local runtime can load them from disk. For `.gguf` uploads, TuwaiqX also generates LocalAI config files and shows the runtime model names in the admin UI. Start the optional LocalAI profile or use another runtime, then add its OpenAI-compatible URL as a provider in `/admin/models`.
 
 ## Uploading Documents
 

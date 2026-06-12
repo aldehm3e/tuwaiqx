@@ -2,6 +2,7 @@ import { prisma } from "@/src/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { providerFromDb } from "@/src/lib/ai/factory";
 import { parseDocument } from "@/src/lib/documents/parse";
+import { readableTextForIndexing } from "@/src/lib/documents/text";
 import { chunkText } from "@/src/lib/rag/chunk";
 import { isPgVectorAvailable, vectorLiteral } from "@/src/lib/rag/vector";
 
@@ -37,7 +38,13 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
         mimeType: document.mimeType
       }));
 
-    const text = parsed?.text || document.title;
+    const text = readableTextForIndexing({
+      parsedText: parsed?.text,
+      fallbackTitle: document.title,
+      parsedFromFile: Boolean(buffer),
+      filename: document.filename,
+      mimeType: document.mimeType
+    });
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "indexing" }
@@ -45,7 +52,16 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
 
     await prisma.documentChunk.deleteMany({ where: { documentId } });
     const chunks = chunkText(text);
-    const provider = providerFromDb(document.bot?.embeddingProvider || document.bot?.modelProvider);
+    if (!chunks.length) {
+      throw new Error("No readable text could be extracted from this document.");
+    }
+    const settings = await prisma.appSettings.findFirst({
+      select: { defaultEmbeddingProviderId: true }
+    });
+    const defaultEmbeddingProvider = settings?.defaultEmbeddingProviderId
+      ? await prisma.modelProvider.findUnique({ where: { id: settings.defaultEmbeddingProviderId } })
+      : null;
+    const provider = providerFromDb(document.bot?.embeddingProvider || document.bot?.modelProvider || defaultEmbeddingProvider);
     const canStoreEmbeddings = await isPgVectorAvailable();
 
     for (const [index, chunk] of chunks.entries()) {

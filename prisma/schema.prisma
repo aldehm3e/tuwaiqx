@@ -78,6 +78,17 @@ enum SystemJobStatus {
   failed
 }
 
+enum LocalModelKind {
+  chat
+  embedding
+}
+
+enum LocalModelStatus {
+  uploaded
+  ready
+  failed
+}
+
 model AppSettings {
   id                         String   @id @default(cuid())
   organizationName           String
@@ -89,7 +100,7 @@ model AppSettings {
   defaultLanguage            String   @default("en")
   defaultDirection           Direction @default(ltr)
   supportEmail               String?
-  sourceCodeUrl              String   @default("https://github.com/YOUR_ORG/tuwaiqx")
+  sourceCodeUrl              String   @default("https://github.com/aldehm3e/tuwaiqx")
   privacyPolicyUrl           String?
   termsUrl                   String?
   dataRetentionDays          Int      @default(365)
@@ -110,6 +121,7 @@ model AdminUser {
   roles        UserRole[]
   auditLogs    AuditLog[]
   documents    Document[] @relation("DocumentCreatedBy")
+  localModelFiles LocalModelFile[] @relation("LocalModelCreatedBy")
   tickets      Ticket[]   @relation("TicketAssignedTo")
   ticketNotes  TicketNote[]
   createdAt    DateTime   @default(now())
@@ -165,6 +177,27 @@ model ModelProvider {
   embeddingBots      Bot[]        @relation("BotEmbeddingProvider")
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+}
+
+model LocalModelFile {
+  id          String           @id @default(cuid())
+  name        String
+  kind        LocalModelKind
+  format      String
+  filename    String
+  mimeType    String?
+  sizeBytes   BigInt
+  storageKey  String           @unique
+  sha256      String
+  status      LocalModelStatus @default(ready)
+  runtimeHint String?
+  createdById String?
+  createdBy   AdminUser?       @relation("LocalModelCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([kind])
+  @@index([createdAt])
 }
 
 model Bot {
@@ -409,4 +442,3 @@ model SystemJob {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
-

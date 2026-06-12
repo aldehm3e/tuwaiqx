@@ -54,13 +54,21 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const guard = await requireAdminRequest(request, "manage_bots");
   if (guard.response) return guard.response;
 
-  const { id } = await params;
-  await prisma.bot.update({ where: { id }, data: { isArchived: true, isActive: false } });
-  await auditLog({
-    userId: guard.admin!.id,
-    action: "bot_archived",
-    entity: "Bot",
-    entityId: id
-  });
-  return NextResponse.json({ message: "Bot archived." });
+  try {
+    const { id } = await params;
+    const bot = await prisma.bot.delete({
+      where: { id },
+      select: { id: true, name: true }
+    });
+    await auditLog({
+      userId: guard.admin!.id,
+      action: "bot_deleted",
+      entity: "Bot",
+      entityId: bot.id,
+      metadata: { name: bot.name }
+    });
+    return NextResponse.json({ message: "Bot deleted." });
+  } catch (error) {
+    return errorResponse(error);
+  }
 }

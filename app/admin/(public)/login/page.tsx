@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { LoginForm } from "@/src/components/admin/LoginForm";
 import { Panel } from "@/src/components/admin/Ui";
 import { getCurrentAdmin } from "@/src/lib/auth/session";
@@ -19,8 +20,16 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-la-surface px-4 py-10">
       <Panel className="w-full max-w-md">
         <div className="mb-6">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-la-green font-bold text-white">
-            TX
+          <div className="mb-4 flex h-16 w-24 items-center justify-center rounded-lg border border-la-line bg-white p-2 shadow-sm">
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain"
+              height={48}
+              priority
+              src="/tuwaiqx-icon.png"
+              width={116}
+            />
           </div>
           <h1 className="text-2xl font-semibold text-ink">Admin login</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">

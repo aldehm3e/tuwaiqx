@@ -75,31 +75,41 @@ export function SettingsForm({
   );
 }
 
-export function ProviderForm() {
+export function ProviderForm({
+  defaultName = "Ollama Local",
+  defaultBaseUrl = "http://ollama:11434",
+  defaultChatModel = "llama3.1",
+  defaultEmbeddingModel = "nomic-embed-text"
+}: {
+  defaultName?: string;
+  defaultBaseUrl?: string;
+  defaultChatModel?: string;
+  defaultEmbeddingModel?: string;
+}) {
   return (
     <SmartForm action="/api/admin/providers" submitLabel="Save provider" className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Name">
-          <input className={inputClass} name="name" required defaultValue="Ollama Local" />
+          <input className={inputClass} name="name" required defaultValue={defaultName} />
         </Field>
         <Field label="Provider type">
           <select className={inputClass} name="type" defaultValue="OLLAMA">
             <option value="OLLAMA">Ollama/local</option>
-            <option value="OPENAI_COMPATIBLE">OpenAI-compatible</option>
+            <option value="OPENAI_COMPATIBLE">OpenAI-compatible/runtime</option>
             <option value="MOCK">Mock</option>
           </select>
         </Field>
         <Field label="Base URL">
-          <input className={inputClass} name="baseUrl" defaultValue="http://ollama:11434" />
+          <input className={inputClass} name="baseUrl" defaultValue={defaultBaseUrl} />
         </Field>
         <Field label="API key">
           <input className={inputClass} name="apiKey" type="password" autoComplete="off" />
         </Field>
         <Field label="Chat model">
-          <input className={inputClass} name="chatModel" defaultValue="llama3.1" />
+          <input className={inputClass} name="chatModel" defaultValue={defaultChatModel} />
         </Field>
         <Field label="Embedding model">
-          <input className={inputClass} name="embeddingModel" defaultValue="nomic-embed-text" />
+          <input className={inputClass} name="embeddingModel" defaultValue={defaultEmbeddingModel} />
         </Field>
       </div>
       <div className="flex gap-4 text-sm">
@@ -112,6 +122,36 @@ export function ProviderForm() {
           Default embeddings
         </label>
       </div>
+    </SmartForm>
+  );
+}
+
+export function LocalModelUploadForm() {
+  return (
+    <SmartForm action="/api/admin/model-files" encType="multipart" submitLabel="Upload model" className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Model name">
+          <input className={inputClass} name="name" required placeholder="Qwen 2.5 0.5B GGUF" />
+        </Field>
+        <Field label="Model role">
+          <select className={inputClass} name="kind" defaultValue="chat">
+            <option value="chat">Chat</option>
+            <option value="embedding">Embedding</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Model file">
+        <input
+          className={inputClass}
+          name="file"
+          required
+          type="file"
+          accept=".gguf,.ggml,.bin,.safetensors,.onnx,.model"
+        />
+      </Field>
+      <Field label="Runtime note">
+        <input className={inputClass} name="runtimeHint" placeholder="Loaded by LocalAI, llama.cpp, vLLM, or another local runtime" />
+      </Field>
     </SmartForm>
   );
 }

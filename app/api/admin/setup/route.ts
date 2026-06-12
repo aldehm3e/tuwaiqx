@@ -10,6 +10,28 @@ import { encryptSecret } from "@/src/lib/security/secrets";
 import { setupSchema } from "@/src/lib/validation/schemas";
 import { splitLines } from "@/src/lib/utils/forms";
 
+function setupProviderDefaults(input: ReturnType<typeof setupSchema.parse>) {
+  if (input.providerType === "MOCK") {
+    return {
+      baseUrl: "",
+      chatModel: input.providerChatModel || "mock-chat",
+      embeddingModel: input.providerEmbeddingModel || "mock-embedding"
+    };
+  }
+
+  if (!input.providerBaseUrl) {
+    throw new Error("Provider base URL is required for this provider type.");
+  }
+
+  return {
+    baseUrl: input.providerBaseUrl,
+    chatModel: input.providerChatModel || (input.providerType === "OLLAMA" ? "llama3.1" : "gpt-4o-mini"),
+    embeddingModel:
+      input.providerEmbeddingModel ||
+      (input.providerType === "OLLAMA" ? "nomic-embed-text" : "text-embedding-3-small")
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const existing = await prisma.appSettings.findFirst();
@@ -19,6 +41,7 @@ export async function POST(request: Request) {
 
     const input = setupSchema.parse(await request.json());
     const env = getEnv();
+    const providerDefaults = setupProviderDefaults(input);
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.role.createMany({
@@ -47,12 +70,12 @@ export async function POST(request: Request) {
 
       const provider = await tx.modelProvider.create({
         data: {
-          name: "Ollama Local",
-          type: "OLLAMA",
-          baseUrl: input.ollamaBaseUrl,
-          chatModel: input.ollamaChatModel,
-          embeddingModel: input.ollamaEmbeddingModel,
-          apiKeyCiphertext: encryptSecret(""),
+          name: input.providerName,
+          type: input.providerType,
+          baseUrl: providerDefaults.baseUrl || null,
+          chatModel: providerDefaults.chatModel,
+          embeddingModel: providerDefaults.embeddingModel,
+          apiKeyCiphertext: encryptSecret(input.providerApiKey || ""),
           isDefaultChat: true,
           isDefaultEmbedding: true
         }
@@ -123,4 +146,3 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
-

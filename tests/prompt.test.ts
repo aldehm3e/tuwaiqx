@@ -8,6 +8,7 @@ describe("buildRagMessages", () => {
       botSystemPrompt: "Be helpful.",
       question: "What are office hours?",
       strictMode: true,
+      allowGeneralAnswer: false,
       maxAnswerLength: 500,
       chunks: [
         {
@@ -24,4 +25,3 @@ describe("buildRagMessages", () => {
     expect(messages[1].content).toContain("Open Sunday to Thursday");
   });
 });
-

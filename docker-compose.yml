@@ -18,11 +18,15 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       STORAGE_PATH: ${STORAGE_PATH:-/data/uploads}
+      MODEL_STORAGE_PATH: ${MODEL_STORAGE_PATH:-/data/models}
+      MAX_MODEL_UPLOAD_MB: ${MAX_MODEL_UPLOAD_MB:-8000}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      LOCAL_RUNTIME_BASE_URL: ${LOCAL_RUNTIME_BASE_URL:-http://localai:8080/v1}
     ports:
       - "3000:3000"
     volumes:
       - uploads:/data/uploads
+      - models:/data/models
     restart: unless-stopped
 
   tuwaiqx-postgres:
@@ -93,9 +97,32 @@ services:
           - ollama
     restart: unless-stopped
 
+  tuwaiqx-localai:
+    image: localai/localai:${LOCALAI_IMAGE_TAG:-latest-cpu}
+    container_name: tuwaiqx-localai
+    profiles:
+      - local-models
+    environment:
+      MODELS_PATH: /models
+      LOCALAI_MODELS_PATH: /models
+      LOCALAI_DATA_PATH: /data
+      DEBUG: ${LOCALAI_DEBUG:-false}
+    ports:
+      - "8080:8080"
+    volumes:
+      - models:/models
+      - localai-data:/data
+    networks:
+      default:
+        aliases:
+          - localai
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:
   minio-data:
   ollama-data:
+  localai-data:
   uploads:
+  models:
