@@ -15,22 +15,22 @@ With Docker Compose, one command starts the full stack:
 
 Without Docker, the same pieces must be installed and maintained manually: Node.js 20, PostgreSQL 16, pgvector, Redis, storage directories or S3-compatible storage, Prisma migrations, a process manager such as systemd or PM2, a reverse proxy, and an optional model runtime.
 
-For a university server, use Docker Compose unless the IT policy does not allow Docker.
+For an entity or organization server, use Docker Compose unless the IT policy does not allow Docker.
 
 ## Choose Your Install Path
 
 | Situation | Recommended path |
 | --- | --- |
-| University gives you one server and allows Docker | [Dedicated University Server Flow](#dedicated-university-server-flow) |
+| Entity gives you one server and allows Docker | [Dedicated Entity Server Flow](#dedicated-entity-server-flow) |
 | Quick test or demo install | [Quick Docker Compose Install](#quick-docker-compose-install) |
 | Fully local AI with Ollama | [Optional Ollama Profile](#optional-ollama-profile) |
 | No Ollama, using LocalAI, llama.cpp, vLLM, or another OpenAI-compatible runtime | [Install Without Ollama](#install-without-ollama) |
-| University policy does not allow Docker | [Manual Install Without Docker](#manual-install-without-docker) |
+| Entity policy does not allow Docker | [Manual Install Without Docker](#manual-install-without-docker) |
 | Uploaded `.gguf` model files with LocalAI | [Optional Local Model Files](#optional-local-model-files) |
 
-## Dedicated University Server Flow
+## Dedicated Entity Server Flow
 
-Use this flow when the university gives you one server and you want to deliver many chatbots to different university websites from the same TuwaiqX installation.
+Use this flow when the entity gives you one server and you want to deliver many chatbots to different entity websites from the same TuwaiqX installation. The entity can be an NGO, charity, school, education institution, public organization, nonprofit, or any self-hosting organization.
 
 ### 1. Request The Server
 
@@ -61,19 +61,19 @@ NVIDIA GPU if running stronger local models
 Ask IT for a subdomain such as:
 
 ```text
-ai.university.edu
+ai.organization.org
 ```
 
 The admin dashboard will be:
 
 ```text
-https://ai.university.edu/admin
+https://ai.organization.org/admin
 ```
 
 The widget script will be:
 
 ```text
-https://ai.university.edu/widget.js
+https://ai.organization.org/widget.js
 ```
 
 ### 3. Open Only Required Public Ports
@@ -91,7 +91,7 @@ Do not expose PostgreSQL, Redis, MinIO, Ollama, or LocalAI ports publicly.
 ### 4. Connect To The Server
 
 ```bash
-ssh your-user@ai.university.edu
+ssh your-user@ai.organization.org
 ```
 
 ### 5. Verify Docker
@@ -124,7 +124,7 @@ Set at least:
 
 ```env
 APP_NAME=TuwaiqX
-APP_URL=https://ai.university.edu
+APP_URL=https://ai.organization.org
 AUTH_SECRET=PUT_A_LONG_RANDOM_SECRET_HERE
 SOURCE_CODE_URL=https://github.com/aldehm3e/tuwaiqx
 ```
@@ -175,7 +175,7 @@ The response should report healthy database, Redis, storage, and model provider 
 
 ### 10. Add HTTPS
 
-Ask IT to put Nginx, Caddy, Traefik, or the university load balancer in front of:
+Ask IT to put Nginx, Caddy, Traefik, or the entity load balancer in front of:
 
 ```text
 http://localhost:3000
@@ -184,7 +184,7 @@ http://localhost:3000
 The public URL should be:
 
 ```text
-https://ai.university.edu
+https://ai.organization.org
 ```
 
 ### 11. Complete First-Run Setup
@@ -192,7 +192,7 @@ https://ai.university.edu
 Open:
 
 ```text
-https://ai.university.edu/admin
+https://ai.organization.org/admin
 ```
 
 Create the first admin user and configure:
@@ -211,11 +211,11 @@ One TuwaiqX installation can serve many bots. Each bot can have its own slug, do
 Example bot slugs:
 
 ```text
-admissions
-registration
-library
-student-affairs
-scholarships
+main
+support
+services
+programs
+forms
 ```
 
 ### 13. Add Allowed Widget Domains
@@ -223,29 +223,29 @@ scholarships
 In `/admin/settings`, add every website that may embed a bot:
 
 ```text
-admissions.university.edu
-library.university.edu
-studentaffairs.university.edu
-main.university.edu
+main.organization.org
+support.organization.org
+services.organization.org
+portal.organization.org
 ```
 
 ### 14. Embed Each Bot
 
-Admissions website:
+Main website:
 
 ```html
 <script
-  src="https://ai.university.edu/widget.js"
-  data-bot-id="admissions">
+  src="https://ai.organization.org/widget.js"
+  data-bot-id="main">
 </script>
 ```
 
-Library website:
+Support website:
 
 ```html
 <script
-  src="https://ai.university.edu/widget.js"
-  data-bot-id="library">
+  src="https://ai.organization.org/widget.js"
+  data-bot-id="support">
 </script>
 ```
 
@@ -267,7 +267,7 @@ Use this path when the organization does not want Ollama at all.
 TuwaiqX can run without Ollama if you provide another chat and embedding provider. The provider can be:
 
 - an OpenAI-compatible local runtime such as LocalAI, llama.cpp server, or vLLM
-- an OpenAI-compatible API endpoint on another university server
+- an OpenAI-compatible API endpoint on another entity-owned server
 - an optional external API provider, if the organization policy allows it
 
 The runtime can be installed on the same physical server as TuwaiqX. It does not have to be a separate machine.
@@ -285,7 +285,7 @@ Docker TuwaiqX + runtime installed directly on the host OS:
 Prefer putting the runtime in Docker too, or expose the runtime on a private host/network address reachable from the TuwaiqX container.
 ```
 
-Do not expose the runtime port publicly. Keep it private to the server or university network, then expose only TuwaiqX through HTTPS.
+Do not expose the runtime port publicly. Keep it private to the server or entity network, then expose only TuwaiqX through HTTPS.
 
 ### Docker Compose Without Ollama
 
@@ -360,7 +360,7 @@ Then restart TuwaiqX:
 sudo systemctl restart tuwaiqx
 ```
 
-If the runtime is on another server, use its private network URL and make sure the TuwaiqX server can reach it. Do not expose the runtime publicly unless the university secures it with authentication, firewall rules, and HTTPS.
+If the runtime is on another server, use its private network URL and make sure the TuwaiqX server can reach it. Do not expose the runtime publicly unless the entity secures it with authentication, firewall rules, and HTTPS.
 
 ## Optional Ollama Profile
 
@@ -390,9 +390,9 @@ http://localai:8080/v1
 
 ## Manual Install Without Docker
 
-Only use this path if the university cannot provide Docker. This is a valid deployment path, but it has more moving parts because the operating system owns PostgreSQL, pgvector, Redis, Node.js, storage, process management, and the model runtime.
+Only use this path if the entity cannot provide Docker. This is a valid deployment path, but it has more moving parts because the operating system owns PostgreSQL, pgvector, Redis, Node.js, storage, process management, and the model runtime.
 
-These steps assume Ubuntu 22.04 or 24.04 and a public domain such as `ai.university.edu`. Adjust package names if the university uses another Linux distribution or an internal package mirror.
+These steps assume Ubuntu 22.04 or 24.04 and a public domain such as `ai.organization.org`. Adjust package names if the entity uses another Linux distribution or an internal package mirror.
 
 ### 1. Install Base Packages
 
@@ -409,7 +409,7 @@ sudo systemctl enable --now redis-server
 
 ### 2. Install Node.js 20
 
-Use the university-approved Node.js package source. If the server has Node.js already, verify:
+Use the entity-approved Node.js package source. If the server has Node.js already, verify:
 
 ```bash
 node -v
@@ -420,7 +420,7 @@ TuwaiqX expects Node.js 20.
 
 ### 3. Install PostgreSQL And pgvector
 
-Install PostgreSQL 16 and the pgvector extension package from the university-approved package source:
+Install PostgreSQL 16 and the pgvector extension package from the entity-approved package source:
 
 ```bash
 sudo apt install -y postgresql-16 postgresql-16-pgvector
@@ -471,7 +471,7 @@ Set at least:
 
 ```env
 APP_NAME=TuwaiqX
-APP_URL=https://ai.university.edu
+APP_URL=https://ai.organization.org
 DATABASE_URL=postgresql://tuwaiqx:CHANGE_THIS_DATABASE_PASSWORD@localhost:5432/tuwaiqx
 REDIS_URL=redis://localhost:6379
 STORAGE_DRIVER=local
@@ -551,7 +551,7 @@ Example Nginx HTTP proxy:
 ```nginx
 server {
     listen 80;
-    server_name ai.university.edu;
+    server_name ai.organization.org;
 
     client_max_body_size 8G;
 
@@ -576,13 +576,13 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Add HTTPS with the university certificate process, Caddy, Certbot, or the university load balancer.
+Add HTTPS with the entity certificate process, Caddy, Certbot, or the entity load balancer.
 
 ### 10. Add A Model Runtime
 
 TuwaiqX needs a model provider for chat and embeddings. In a manual install, the runtime is managed outside TuwaiqX.
 
-For Ollama on the same server, install Ollama using the university-approved method, then:
+For Ollama on the same server, install Ollama using the entity-approved method, then:
 
 ```bash
 ollama pull qwen2.5:0.5b
@@ -616,7 +616,7 @@ curl http://localhost:3000/api/health
 Then open:
 
 ```text
-https://ai.university.edu/admin
+https://ai.organization.org/admin
 ```
 
 Complete first-run setup, create bots, upload knowledge, test each bot, and embed the widget.
