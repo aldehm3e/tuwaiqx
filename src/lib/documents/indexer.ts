@@ -2,6 +2,7 @@ import { prisma } from "@/src/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { providerFromDb } from "@/src/lib/ai/factory";
 import { parseDocument } from "@/src/lib/documents/parse";
+import { readStoredObject } from "@/src/lib/documents/storage";
 import { readableTextForIndexing } from "@/src/lib/documents/text";
 import { chunkText } from "@/src/lib/rag/chunk";
 import { isPgVectorAvailable, vectorLiteral } from "@/src/lib/rag/vector";
@@ -61,7 +62,7 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
     const defaultEmbeddingProvider = settings?.defaultEmbeddingProviderId
       ? await prisma.modelProvider.findUnique({ where: { id: settings.defaultEmbeddingProviderId } })
       : null;
-    const provider = providerFromDb(document.bot?.embeddingProvider || document.bot?.modelProvider || defaultEmbeddingProvider);
+    const provider = providerFromDb(document.bot?.embeddingProvider || defaultEmbeddingProvider || document.bot?.modelProvider);
     const canStoreEmbeddings = await isPgVectorAvailable();
 
     for (const [index, chunk] of chunks.entries()) {
@@ -140,5 +141,32 @@ export async function indexTextDocument(input: {
   });
 
   await indexDocument(document.id, Buffer.from(input.content, "utf8"));
+  return document;
+}
+
+export async function reindexDocument(documentId: string) {
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: {
+      chunks: {
+        orderBy: { chunkIndex: "asc" },
+        select: { content: true }
+      }
+    }
+  });
+
+  if (!document) {
+    throw new Error("Document not found.");
+  }
+
+  const buffer = document.storageKey
+    ? await readStoredObject(document.storageKey)
+    : Buffer.from(document.chunks.map((chunk) => chunk.content).join("\n\n"), "utf8");
+
+  if (!buffer.length) {
+    throw new Error("No stored file or indexed text is available for this document.");
+  }
+
+  await indexDocument(documentId, buffer);
   return document;
 }

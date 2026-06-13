@@ -2,6 +2,8 @@
 
 TuwaiqX can store downloaded chat and embedding model files on the server through `/admin/models`.
 
+Uploading a model file does not run the model. A separate runtime must load the uploaded file and expose an API that TuwaiqX can call.
+
 Supported upload formats:
 
 - `.gguf`
@@ -27,7 +29,7 @@ volumes:
 
 ## Runtime
 
-TuwaiqX stores and manages model files, but it does not execute model weights inside the Next.js web process. Run the uploaded files with a local inference runtime such as LocalAI, llama.cpp server, vLLM, or another OpenAI-compatible server.
+TuwaiqX stores and manages model files, but it does not execute model weights inside the Next.js web process. Run the uploaded files with a local inference runtime such as LocalAI, llama.cpp server, LM Studio, vLLM, SGLang, or another OpenAI-compatible server.
 
 ### Optional LocalAI profile
 
@@ -50,7 +52,7 @@ tuwaiqx-chat-<model-file-id>
 tuwaiqx-embedding-<model-file-id>
 ```
 
-Add a provider with:
+Add a provider in `/admin/models` with:
 
 ```text
 Type: OpenAI-compatible/runtime
@@ -61,7 +63,7 @@ Embedding model: tuwaiqx-embedding-<model-file-id>
 
 Use `LOCALAI_IMAGE_TAG` to switch LocalAI images, for example a GPU-specific tag from the LocalAI project. Non-GGUF formats are still stored by TuwaiqX, but they may need manual runtime configuration in LocalAI, vLLM, llama.cpp server, or another runtime.
 
-### External runtime
+### External or Windows runtime
 
 After any runtime loads the model file:
 
@@ -71,5 +73,19 @@ After any runtime loads the model file:
 4. Set the chat and embedding model names used by that runtime.
 5. Click `Retest`.
 6. Mark it as the default chat and/or embedding provider.
+
+For Windows runtimes on the same machine as a Docker-based TuwaiqX install, use:
+
+```text
+http://host.docker.internal:<port>/v1
+```
+
+For manual non-Docker installs where TuwaiqX and the runtime are both on the same Windows host, use:
+
+```text
+http://127.0.0.1:<port>/v1
+```
+
+If chat and embedding run on separate ports, create separate providers and mark one as default chat and the other as default embeddings.
 
 This keeps TuwaiqX local-first while allowing organizations to choose Ollama, an API endpoint, or downloaded model files managed on their own server.

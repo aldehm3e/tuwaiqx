@@ -109,6 +109,7 @@ export const chatSchema = z.object({
   botId: z.string().min(1),
   conversationId: z.string().optional(),
   visitorId: z.string().optional(),
+  language: z.enum(["en", "ar"]).optional(),
   message: z.string().min(1).max(4000),
   pageUrl: z.string().url().optional()
 });
@@ -122,6 +123,12 @@ export const ticketSchema = z.object({
   subject: z.string().min(2).max(200),
   message: z.string().min(2).max(4000),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal")
+});
+
+export const ticketUpdateSchema = z.object({
+  status: z.enum(["open", "pending", "resolved", "closed"]).optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+  assignedToId: z.string().optional().or(z.literal(""))
 });
 
 export const formSchema = z.object({

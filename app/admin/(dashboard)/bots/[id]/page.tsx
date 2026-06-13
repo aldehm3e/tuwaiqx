@@ -32,16 +32,16 @@ export default async function BotDetailPage({ params }: { params: Promise<{ id: 
           </>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_28rem]">
         <Panel>
           <div className="grid gap-4 md:grid-cols-3">
             <div><div className="text-xs text-slate-500">Status</div><Badge tone={bot.isActive ? "good" : "warn"}>{bot.isActive ? "active" : "disabled"}</Badge></div>
             <div><div className="text-xs text-slate-500">Documents</div><div className="text-lg font-semibold">{bot._count.documents}</div></div>
             <div><div className="text-xs text-slate-500">Conversations</div><div className="text-lg font-semibold">{bot._count.conversations}</div></div>
           </div>
-          <div className="mt-6 rounded-lg border border-la-line bg-la-surface p-4">
+          <div className="mt-6 min-w-0 rounded-lg border border-la-line bg-la-surface p-4">
             <div className="text-sm font-semibold">Embed snippet</div>
-            <pre className="mt-3 overflow-x-auto rounded-md bg-white p-3 text-xs text-slate-700">{`<script src="${appUrl}/widget.js" data-bot-id="${bot.slug}"></script>`}</pre>
+            <pre className="mt-3 max-w-full overflow-x-auto rounded-md bg-white p-3 text-xs text-slate-700">{`<script src="${appUrl}/widget.js" data-bot-id="${bot.slug}"></script>`}</pre>
           </div>
           <div className="mt-6">
             <h2 className="text-lg font-semibold">Prompt</h2>

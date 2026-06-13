@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { botSchema, chatSchema, localModelUploadSchema, setupSchema } from "../src/lib/validation/schemas";
+import { botSchema, chatSchema, localModelUploadSchema, setupSchema, ticketUpdateSchema } from "../src/lib/validation/schemas";
 
 describe("validation schemas", () => {
   it("rejects invalid bot slugs", () => {
@@ -21,6 +21,17 @@ describe("validation schemas", () => {
     expect(() =>
       chatSchema.parse({ botId: "main", message: "x".repeat(5000) })
     ).toThrow();
+  });
+
+  it("accepts optional public chat language", () => {
+    const parsed = chatSchema.parse({ botId: "main", message: "Hello", language: "en" });
+    expect(parsed.language).toBe("en");
+  });
+
+  it("accepts ticket workflow updates", () => {
+    const parsed = ticketUpdateSchema.parse({ status: "pending", priority: "high", assignedToId: "" });
+    expect(parsed.status).toBe("pending");
+    expect(parsed.priority).toBe("high");
   });
 
   it("accepts setup input", () => {

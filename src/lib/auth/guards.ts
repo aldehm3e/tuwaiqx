@@ -11,7 +11,7 @@ export async function requireAdminPage(permission?: Permission) {
   }
 
   if (permission && !hasPermission(admin.permissions, permission)) {
-    redirect("/admin");
+    redirect("/admin/not-authorized");
   }
 
   return admin;
@@ -29,10 +29,9 @@ export async function requireAdminRequest(request: Request, permission?: Permiss
   if (permission && !hasPermission(admin.permissions, permission)) {
     return {
       admin,
-      response: NextResponse.json({ error: "Insufficient permissions" }, { status: 403 })
+      response: NextResponse.json({ error: "Your role is not allowed to perform this action." }, { status: 403 })
     };
   }
 
   return { admin, response: null };
 }
-

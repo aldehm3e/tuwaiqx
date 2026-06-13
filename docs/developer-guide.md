@@ -28,6 +28,8 @@
 - `POST /api/admin/logout`
 - `PUT /api/admin/settings`
 - `POST /api/admin/users`
+- `PATCH /api/admin/users/:id`
+- `DELETE /api/admin/users/:id`
 - `POST /api/admin/providers`
 - `POST /api/admin/model-files`
 - `DELETE /api/admin/model-files/:id`
@@ -38,7 +40,12 @@
 - `POST /api/admin/documents/upload`
 - `POST /api/admin/documents/manual`
 - `POST /api/admin/documents/crawler`
+- `POST /api/admin/documents/reindex`
+- `POST /api/admin/documents/:id/reindex`
 - `POST /api/admin/tickets`
+- `PATCH /api/admin/tickets/:id`
 - `POST /api/admin/forms`
 
 All admin routes require local admin authentication and permission checks.
+
+Page-level permission failures redirect to `/admin/not-authorized`. API permission failures return HTTP `403` with a role-specific error message.

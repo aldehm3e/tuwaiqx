@@ -1,8 +1,11 @@
 import { Badge, Field, PageHeader, Panel, inputClass } from "@/src/components/admin/Ui";
 import { SmartForm } from "@/src/components/admin/SmartForm";
+import { UserActions } from "@/src/components/admin/UserActions";
+import { requireAdminPage } from "@/src/lib/auth/guards";
 import { prisma } from "@/src/lib/db/prisma";
 
 export default async function UsersPage() {
+  const currentAdmin = await requireAdminPage("manage_users");
   const users = await prisma.adminUser.findMany({
     orderBy: { createdAt: "desc" },
     include: { roles: { include: { role: true } } }
@@ -22,6 +25,7 @@ export default async function UsersPage() {
                   <th className="py-3 pr-3">Roles</th>
                   <th className="py-3 pr-3">Status</th>
                   <th className="py-3 pr-3">Last login</th>
+                  <th className="py-3 pr-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -34,6 +38,14 @@ export default async function UsersPage() {
                     <td className="py-3 pr-3 text-slate-600">{user.roles.map((role) => role.role.name).join(", ")}</td>
                     <td className="py-3 pr-3"><Badge tone={user.isActive ? "good" : "danger"}>{user.isActive ? "active" : "disabled"}</Badge></td>
                     <td className="py-3 pr-3 text-slate-500">{user.lastLoginAt?.toLocaleString() || "Never"}</td>
+                    <td className="py-3 pr-3">
+                      <UserActions
+                        userId={user.id}
+                        userLabel={user.name || user.email}
+                        isActive={user.isActive}
+                        isSelf={user.id === currentAdmin.id}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -57,4 +69,3 @@ export default async function UsersPage() {
     </div>
   );
 }
-

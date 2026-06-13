@@ -24,6 +24,10 @@ function isArabicBot(bot?: Pick<BotTesterBot, "language" | "direction">) {
   return bot?.direction === "rtl" || bot?.language.toLowerCase().startsWith("ar");
 }
 
+function chatLanguage(bot?: Pick<BotTesterBot, "language" | "direction">) {
+  return isArabicBot(bot) ? "ar" : "en";
+}
+
 function initialMessages(bot?: BotTesterBot): Message[] {
   return bot?.welcomeMessage ? [{ role: "assistant", content: bot.welcomeMessage }] : [];
 }
@@ -64,7 +68,13 @@ export function BotTester({ bots }: { bots: BotTesterBot[] }) {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ botId, conversationId, message: text, pageUrl: window.location.href })
+      body: JSON.stringify({
+        botId,
+        conversationId,
+        language: chatLanguage(selectedBot),
+        message: text,
+        pageUrl: window.location.href
+      })
     });
     const data = await response.json();
     setLoading(false);

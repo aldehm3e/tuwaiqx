@@ -22,6 +22,7 @@ export function buildRagMessages(input: {
   strictMode: boolean;
   allowGeneralAnswer: boolean;
   botLanguage?: string;
+  preferredLanguage?: "en" | "ar";
   maxAnswerLength: number;
 }): ChatMessage[] {
   const context = input.chunks
@@ -52,12 +53,19 @@ export function buildRagMessages(input: {
           "If you use general knowledge, clearly say that it is not from the organization knowledge base."
         ].join(" ");
 
+  const languageInstruction =
+    input.preferredLanguage === "ar"
+      ? "Answer in Arabic unless the user explicitly asks for another language."
+      : input.preferredLanguage === "en"
+        ? "Answer in English unless the user explicitly asks for another language."
+        : input.botLanguage?.toLowerCase().startsWith("ar")
+          ? "Answer in Arabic unless the user explicitly asks for another language."
+          : "Answer in the same language as the user when possible.";
+
   const system = [
     input.botSystemPrompt,
     `You are ${input.botName}${input.organizationName ? ` for ${input.organizationName}` : ""}.`,
-    input.botLanguage?.toLowerCase().startsWith("ar")
-      ? "Answer in Arabic unless the user explicitly asks for another language."
-      : "Answer in the same language as the user when possible.",
+    languageInstruction,
     "Keep the answer concise and useful.",
     "Answer only the user's question. Do not add related details unless the user asks for them.",
     "Return the final answer only; do not include reasoning.",

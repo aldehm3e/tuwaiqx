@@ -92,23 +92,23 @@ export function ProviderForm({
         <Field label="Name">
           <input className={inputClass} name="name" required defaultValue={defaultName} />
         </Field>
-        <Field label="Provider type">
+        <Field label="Provider type" hint="Use OpenAI-compatible for external APIs or local runtimes such as LM Studio, llama.cpp, LocalAI, vLLM, or SGLang.">
           <select className={inputClass} name="type" defaultValue="OLLAMA">
-            <option value="OLLAMA">Ollama/local</option>
-            <option value="OPENAI_COMPATIBLE">OpenAI-compatible/runtime</option>
+            <option value="OLLAMA">Ollama API</option>
+            <option value="OPENAI_COMPATIBLE">OpenAI-compatible API/runtime</option>
             <option value="MOCK">Mock</option>
           </select>
         </Field>
-        <Field label="Base URL">
+        <Field label="Base URL" hint="Examples: LM Studio http://127.0.0.1:1234/v1, llama.cpp http://127.0.0.1:8080/v1, Docker-to-Windows http://host.docker.internal:1234/v1.">
           <input className={inputClass} name="baseUrl" defaultValue={defaultBaseUrl} />
         </Field>
-        <Field label="API key">
+        <Field label="API key" hint="Leave empty for local runtimes unless the runtime requires a key.">
           <input className={inputClass} name="apiKey" type="password" autoComplete="off" />
         </Field>
-        <Field label="Chat model">
+        <Field label="Chat model" hint="Use the exact chat model name returned by the runtime's /v1/models endpoint.">
           <input className={inputClass} name="chatModel" defaultValue={defaultChatModel} />
         </Field>
-        <Field label="Embedding model">
+        <Field label="Embedding model" hint="Use the exact embedding model name returned by the runtime's /v1/models endpoint. Re-index knowledge after changing it.">
           <input className={inputClass} name="embeddingModel" defaultValue={defaultEmbeddingModel} />
         </Field>
       </div>
@@ -140,7 +140,7 @@ export function LocalModelUploadForm() {
           </select>
         </Field>
       </div>
-      <Field label="Model file">
+      <Field label="Model file" hint="This only stores a file for a runtime to load. TuwaiqX does not download or execute model weights from this form.">
         <input
           className={inputClass}
           name="file"

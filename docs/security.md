@@ -41,7 +41,9 @@ Rotating `AUTH_SECRET` invalidates sessions and makes existing encrypted provide
 
 ## Admin Access
 
-Use strong passwords, limit admin accounts, disable unused users, and restrict `/admin` with network controls where practical.
+Use strong passwords, limit admin accounts, disable or delete unused users, and restrict `/admin` with network controls where practical.
+
+Only users with `manage_users` can manage admin accounts. Users cannot disable or delete their own account, and TuwaiqX prevents removing the last active user with user-management permission.
 
 ## Backups
 

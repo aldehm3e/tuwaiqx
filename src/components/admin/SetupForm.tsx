@@ -41,23 +41,23 @@ export function SetupForm() {
         <Field label="Provider name">
           <input className={inputClass} name="providerName" defaultValue="Ollama Local" />
         </Field>
-        <Field label="Provider type">
+        <Field label="Provider type" hint="Use OpenAI-compatible for external APIs or local runtimes such as LM Studio, llama.cpp, LocalAI, vLLM, or SGLang.">
           <select className={inputClass} name="providerType" defaultValue="OLLAMA">
-            <option value="OLLAMA">Ollama/local</option>
-            <option value="OPENAI_COMPATIBLE">OpenAI-compatible/runtime</option>
+            <option value="OLLAMA">Ollama API</option>
+            <option value="OPENAI_COMPATIBLE">OpenAI-compatible API/runtime</option>
             <option value="MOCK">Mock</option>
           </select>
         </Field>
-        <Field label="Provider base URL">
+        <Field label="Provider base URL" hint="Examples: LM Studio http://127.0.0.1:1234/v1, llama.cpp http://127.0.0.1:8080/v1, Docker-to-Windows http://host.docker.internal:1234/v1.">
           <input className={inputClass} name="providerBaseUrl" defaultValue="http://ollama:11434" />
         </Field>
-        <Field label="API key">
+        <Field label="API key" hint="Leave empty for local runtimes unless the runtime requires a key.">
           <input className={inputClass} name="providerApiKey" type="password" autoComplete="off" />
         </Field>
-        <Field label="Chat model">
+        <Field label="Chat model" hint="Use the exact chat model name returned by the runtime's /v1/models endpoint.">
           <input className={inputClass} name="providerChatModel" defaultValue="llama3.1" />
         </Field>
-        <Field label="Embedding model">
+        <Field label="Embedding model" hint="Use the exact embedding model name returned by the runtime's /v1/models endpoint. Re-index knowledge after changing it.">
           <input className={inputClass} name="providerEmbeddingModel" defaultValue="nomic-embed-text" />
         </Field>
       </div>

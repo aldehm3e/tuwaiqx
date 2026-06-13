@@ -49,7 +49,10 @@ export default async function ModelsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Model providers" description="Use Ollama, connect an OpenAI-compatible endpoint, or manage local model files for a server-side runtime." />
+      <PageHeader
+        title="Model providers"
+        description="Connect Ollama, an external OpenAI-compatible API, or a local runtime such as LM Studio, llama.cpp, LocalAI, vLLM, or SGLang. TuwaiqX manages admin, bots, and knowledge; the runtime serves chat and embeddings."
+      />
       <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
         <Panel>
           <div className="overflow-x-auto">
@@ -94,6 +97,10 @@ export default async function ModelsPage() {
         </Panel>
         <Panel>
           <h2 className="mb-4 text-lg font-semibold">Add provider</h2>
+          <div className="mb-4 rounded-md border border-la-line bg-la-surface p-3 text-sm leading-6 text-slate-600">
+            Start the model runtime first, then add its API URL here. For local Windows runtimes, use the OpenAI-compatible API/runtime type and a base URL ending in
+            <code className="rounded bg-white px-1 py-0.5">/v1</code>.
+          </div>
           <ProviderForm
             defaultBaseUrl={defaultBaseUrl}
             defaultChatModel={defaultChatModel}
@@ -106,11 +113,12 @@ export default async function ModelsPage() {
           <div className="mb-4 flex flex-col gap-1">
             <h2 className="text-lg font-semibold">Uploaded local model files</h2>
             <p className="text-sm leading-6 text-slate-600">
-              Stored under <code className="rounded bg-la-surface px-1 py-0.5">{modelStoragePath}</code> for local runtimes that load model files from disk.
+              Stored under <code className="rounded bg-la-surface px-1 py-0.5">{modelStoragePath}</code> for local runtimes that load model files from disk. Uploading stores
+              files only; it does not download or start a model server.
             </p>
           </div>
           {localModels.length === 0 ? (
-            <EmptyState title="No local model files" body="Upload chat or embedding model files that a local runtime can load from the server filesystem." />
+            <EmptyState title="No local model files" body="Upload chat or embedding model files only when a separate local runtime will load them from the server filesystem." />
           ) : (
             <div className="divide-y divide-la-line">
               {localModels.map((model) => (
@@ -163,8 +171,10 @@ export default async function ModelsPage() {
         <Panel>
           <h2 className="mb-4 text-lg font-semibold">Upload local model</h2>
           <div className="mb-4 rounded-md border border-la-line bg-la-surface p-3 text-sm leading-6 text-slate-600">
-            Start the optional LocalAI runtime with <code className="rounded bg-white px-1 py-0.5">docker compose --profile local-models up -d</code>, then add an
-            OpenAI-compatible/runtime provider at <code className="rounded bg-white px-1 py-0.5">{localRuntimeBaseUrl}</code>.
+            This stores model files for a separately managed runtime. For Docker LocalAI, start
+            <code className="rounded bg-white px-1 py-0.5">docker compose --profile local-models up -d</code>, then add an OpenAI-compatible/runtime provider at
+            <code className="rounded bg-white px-1 py-0.5">{localRuntimeBaseUrl}</code>. For LM Studio or llama.cpp on Windows, add their local
+            <code className="rounded bg-white px-1 py-0.5">/v1</code> API instead.
           </div>
           <LocalModelUploadForm />
         </Panel>

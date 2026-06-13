@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeleteAction } from "@/src/components/admin/DeleteAction";
+import { ReindexAction } from "@/src/components/admin/ReindexAction";
 import { Badge, EmptyState, PageHeader, Panel, buttonClass, secondaryButtonClass } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
 
@@ -16,6 +17,11 @@ export default async function KnowledgePage() {
         description="Upload files, add manual entries, crawl public pages, approve content, inspect chunks, and keep source citations attached."
         action={
           <>
+            <ReindexAction
+              action="/api/admin/documents/reindex"
+              label="Re-index all"
+              confirmMessage="Re-index all knowledge documents? This rebuilds chunks and embeddings with the current embedding provider."
+            />
             <Link className={secondaryButtonClass} href="/admin/knowledge/manual">Manual entry</Link>
             <Link className={secondaryButtonClass} href="/admin/knowledge/crawler">Crawler</Link>
             <Link className={buttonClass} href="/admin/knowledge/upload">Upload</Link>
@@ -52,11 +58,17 @@ export default async function KnowledgePage() {
                     <td className="py-3 pr-3">{document._count.chunks}</td>
                     <td className="py-3 pr-3 text-slate-500">{document.indexedAt?.toLocaleString() || "Not yet"}</td>
                     <td className="py-3 pr-3">
-                      <DeleteAction
-                        action={`/api/admin/documents/${document.id}`}
-                        label="Delete"
-                        confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
-                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ReindexAction
+                          action={`/api/admin/documents/${document.id}/reindex`}
+                          confirmMessage={`Re-index ${document.title}? This rebuilds its chunks and embeddings with the current embedding provider.`}
+                        />
+                        <DeleteAction
+                          action={`/api/admin/documents/${document.id}`}
+                          label="Delete"
+                          confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

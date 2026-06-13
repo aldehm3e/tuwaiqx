@@ -1,4 +1,5 @@
 import { DeleteAction } from "@/src/components/admin/DeleteAction";
+import { ReindexAction } from "@/src/components/admin/ReindexAction";
 import { Badge, PageHeader, Panel } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
 
@@ -15,11 +16,17 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
         title={document.title}
         description={document.sourceUrl || document.filename || "Knowledge document"}
         action={
-          <DeleteAction
-            action={`/api/admin/documents/${document.id}`}
-            confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
-            redirectTo="/admin/knowledge"
-          />
+          <>
+            <ReindexAction
+              action={`/api/admin/documents/${document.id}/reindex`}
+              confirmMessage={`Re-index ${document.title}? This rebuilds its chunks and embeddings with the current embedding provider.`}
+            />
+            <DeleteAction
+              action={`/api/admin/documents/${document.id}`}
+              confirmMessage={`Delete ${document.title}? Its indexed chunks will also be removed.`}
+              redirectTo="/admin/knowledge"
+            />
+          </>
         }
       />
       <Panel>

@@ -10,10 +10,10 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 border-b border-la-line pb-5 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal text-ink">{title}</h1>
-        {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+    <div className="flex min-w-0 flex-col gap-4 border-b border-la-line pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="min-w-0">
+        <h1 className="break-words text-2xl font-semibold tracking-normal text-ink">{title}</h1>
+        {description ? <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
       {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
     </div>
@@ -27,7 +27,7 @@ export function Panel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <section className={clsx("rounded-lg border border-la-line bg-white p-5 shadow-soft", className)}>{children}</section>;
+  return <section className={clsx("min-w-0 rounded-lg border border-la-line bg-white p-5 shadow-soft", className)}>{children}</section>;
 }
 
 export function StatCard({
@@ -111,4 +111,3 @@ export function EmptyState({ title, body }: { title: string; body: string }) {
     </div>
   );
 }
-
