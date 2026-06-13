@@ -1,6 +1,5 @@
 import {
   Activity,
-  Archive,
   BookOpen,
   Bot,
   ChartNoAxesCombined,
@@ -30,7 +29,6 @@ const nav = [
   { href: "/admin/embed", label: "Embed", icon: FileText },
   { href: "/admin/conversations", label: "Conversations", icon: ClipboardList },
   { href: "/admin/tickets", label: "Tickets", icon: Ticket },
-  { href: "/admin/forms", label: "Forms", icon: Archive },
   { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombined },
   { href: "/admin/system", label: "System", icon: Database },
   { href: "/admin/audit-log", label: "Audit Log", icon: ShieldCheck },

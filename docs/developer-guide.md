@@ -17,7 +17,6 @@
 - `POST /api/chat`
 - `GET /api/widget/config?botId=main`
 - `POST /api/chat/feedback`
-- `POST /api/forms/:slug/submit`
 - `GET /api/health`
 - `GET /api/version`
 
@@ -44,7 +43,6 @@
 - `POST /api/admin/documents/:id/reindex`
 - `POST /api/admin/tickets`
 - `PATCH /api/admin/tickets/:id`
-- `POST /api/admin/forms`
 
 All admin routes require local admin authentication and permission checks.
 

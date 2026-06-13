@@ -15,7 +15,7 @@ Auther: Eng. Abdulrahman Alsaedi
 - Document upload and indexing for PDF, DOCX, TXT, Markdown, HTML, CSV, XLSX, JSON, manual text, FAQ, and website crawling.
 - Retrieval-augmented chat with pgvector search, full-text fallback, strict mode, citations, conversation logs, feedback, and knowledge gap tracking.
 - Standalone embeddable `widget.js` with Shadow DOM, localStorage conversation continuity, RTL/LTR support, quick actions, sources, and feedback.
-- Built-in tickets/handoff, local forms/workflows, local analytics, CSV/JSON-oriented APIs, backup/restore scripts, and documentation for self-hosting.
+- Built-in tickets/handoff, local analytics, CSV/JSON-oriented APIs, backup/restore scripts, and documentation for self-hosting.
 
 ## License
 
@@ -153,7 +153,6 @@ Important routes:
 - `/admin/embed`
 - `/admin/conversations`
 - `/admin/tickets`
-- `/admin/forms`
 - `/admin/analytics`
 - `/admin/system`
 - `/admin/audit-log`

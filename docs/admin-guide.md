@@ -41,11 +41,9 @@ Conversation logs are in `/admin/conversations`. Fallbacks create knowledge gaps
 
 Analytics feedback counts are totals across assistant messages. The Analytics page also lists recent feedback with rating, bot, user question, answer preview, and a conversation link.
 
-## Tickets and Forms
+## Tickets
 
 Tickets are available in `/admin/tickets`. The ticket detail page supports status changes, assignment, priority updates, linked conversation review, and manual ticket creation. Chat fallback or explicit handoff requests can automatically create a ticket for the conversation.
-
-Forms can be created for common NGO workflows such as volunteer applications, contact requests, complaints, beneficiary requests, and event registrations.
 
 ## Users and Permissions
 

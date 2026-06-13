@@ -33,7 +33,7 @@ export default async function LoginPage() {
           </div>
           <h1 className="text-2xl font-semibold text-ink">Admin login</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Sign in to manage bots, knowledge, conversations, tickets, forms, and system settings.
+            Sign in to manage bots, knowledge, conversations, tickets, and system settings.
           </p>
         </div>
         <LoginForm />

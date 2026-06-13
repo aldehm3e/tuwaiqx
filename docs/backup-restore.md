@@ -12,7 +12,6 @@ Restore:
 ./scripts/restore.sh ./backups/tuwaiqx-2026-06-12
 ```
 
-Backups should be encrypted and stored away from the application server. Treat backups as sensitive because they contain conversations, documents, tickets, form submissions, and provider configuration.
+Backups should be encrypted and stored away from the application server. Treat backups as sensitive because they contain conversations, documents, tickets, and provider configuration.
 
 Test restores regularly on a separate server.
-

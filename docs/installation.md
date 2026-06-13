@@ -215,7 +215,6 @@ main
 support
 services
 programs
-forms
 ```
 
 ### 13. Add Allowed Widget Domains

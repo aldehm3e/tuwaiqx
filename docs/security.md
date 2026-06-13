@@ -2,7 +2,7 @@
 
 ## Threat Model
 
-TuwaiqX stores organization documents, conversations, tickets, form submissions, model provider credentials, and admin accounts. Main risks include unauthorized admin access, public endpoint abuse, prompt injection through documents or chat messages, data leakage through widget domains, unsafe uploads, and backup exposure.
+TuwaiqX stores organization documents, conversations, tickets, model provider credentials, and admin accounts. Main risks include unauthorized admin access, public endpoint abuse, prompt injection through documents or chat messages, data leakage through widget domains, unsafe uploads, and backup exposure.
 
 ## Baseline Controls
 

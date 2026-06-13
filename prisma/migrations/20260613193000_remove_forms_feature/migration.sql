@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS "FormSubmission";
+DROP TABLE IF EXISTS "FormField";
+DROP TABLE IF EXISTS "Form";
+DROP TYPE IF EXISTS "FormFieldType";

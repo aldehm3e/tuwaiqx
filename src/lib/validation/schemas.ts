@@ -130,17 +130,3 @@ export const ticketUpdateSchema = z.object({
   priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
   assignedToId: z.string().optional().or(z.literal(""))
 });
-
-export const formSchema = z.object({
-  slug: z
-    .string()
-    .min(2)
-    .max(80)
-    .regex(/^[a-z0-9-]+$/),
-  name: z.string().min(2).max(160),
-  description: z.string().optional().or(z.literal("")),
-  submitLabel: z.string().min(1).max(80).default("Submit"),
-  botId: z.string().optional().or(z.literal("")),
-  webhookUrl: z.string().url().optional().or(z.literal("")),
-  emailNotification: z.string().email().optional().or(z.literal(""))
-});

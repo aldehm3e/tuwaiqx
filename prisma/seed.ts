@@ -201,28 +201,6 @@ async function main() {
     });
   }
 
-  await prisma.form.upsert({
-    where: { slug: "volunteer-application" },
-    update: {},
-    create: {
-      slug: "volunteer-application",
-      name: "Volunteer Application",
-      description: "Apply to volunteer with Peaceful Aid NGO.",
-      submitLabel: "Apply",
-      botId: volunteerBot.id,
-      fields: {
-        createMany: {
-          data: [
-            { label: "Name", name: "name", type: "text", required: true, order: 0 },
-            { label: "Email", name: "email", type: "email", required: true, order: 1 },
-            { label: "Phone", name: "phone", type: "phone", required: false, order: 2 },
-            { label: "Why do you want to volunteer?", name: "message", type: "textarea", required: true, order: 3 }
-          ]
-        }
-      }
-    }
-  });
-
   console.log("Seed data ready.");
   console.log(`Demo owner: ${ownerEmail}`);
   if (!process.env.FIRST_RUN_ADMIN_PASSWORD) {
