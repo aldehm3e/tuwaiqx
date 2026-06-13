@@ -2,6 +2,7 @@ import { parse as parseCsv } from "csv-parse/sync";
 import * as cheerio from "cheerio";
 import ExcelJS from "exceljs";
 import mammoth from "mammoth";
+import { repairArabicTextDirection } from "./arabic-text";
 
 export type ParsedDocument = {
   text: string;
@@ -23,7 +24,7 @@ export async function parseDocument(input: {
   if (mime.includes("pdf") || fileExt === "pdf") {
     const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(input.buffer);
-    return { text: data.text, metadata: { pages: data.numpages } };
+    return { text: repairArabicTextDirection(data.text), metadata: { pages: data.numpages } };
   }
 
   if (

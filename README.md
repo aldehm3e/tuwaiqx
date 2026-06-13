@@ -122,6 +122,8 @@ Downloaded model files can be uploaded in `/admin/models`. TuwaiqX stores them u
 
 Go to `/admin/knowledge/upload` and upload supported files. TuwaiqX stores the original file, parses text, chunks content, generates embeddings when a provider is available, stores chunks in pgvector, and keeps full-text fallback search available.
 
+Arabic and RTL PDFs receive conservative text-direction cleanup during parsing. For scanned PDFs or PDFs with unusual embedded fonts, inspect chunks after upload and use OCR or a cleaner text version when needed.
+
 Manual entries and FAQ entries are available at `/admin/knowledge/manual`. Website ingestion is available at `/admin/knowledge/crawler`.
 
 ## Embedding the Widget

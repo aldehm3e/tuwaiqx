@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/db/prisma";
 import { providerFromDb } from "@/src/lib/ai/factory";
 import { findDirectKnowledgeAnswer } from "@/src/lib/rag/direct-answer";
+import { fallbackForLanguage, resolveResponseLanguage } from "@/src/lib/rag/language";
 import { buildRagMessages } from "@/src/lib/rag/prompt";
 import { searchKnowledge } from "@/src/lib/rag/search";
 
@@ -86,6 +87,12 @@ export async function answerQuestion(input: {
     throw new Error("Bot was not found or is inactive.");
   }
 
+  const responseLanguage = resolveResponseLanguage({
+    preferredLanguage: input.language,
+    botLanguage: bot.language,
+    question: input.message
+  });
+  const fallbackMessage = fallbackForLanguage(bot.fallbackMessage, responseLanguage);
   const settings = await prisma.appSettings.findFirst();
   const [defaultChatProvider, defaultEmbeddingProvider] = await Promise.all([
     settings?.defaultChatProviderId
@@ -102,7 +109,7 @@ export async function answerQuestion(input: {
   let answer = directAnswer?.answer;
 
   if (!answer && shouldCreateHandoffTicket) {
-    answer = handoffAnswer(input.language);
+    answer = handoffAnswer(responseLanguage);
   }
 
   if (!answer) {
@@ -128,7 +135,7 @@ export async function answerQuestion(input: {
     const hasContext = chunks.length > 0;
     shouldFallback = contextOnly && !hasContext;
     answer = shouldFallback
-      ? bot.fallbackMessage
+      ? fallbackMessage
       : (
           await chatProvider.complete({
             messages: buildRagMessages({
@@ -140,13 +147,13 @@ export async function answerQuestion(input: {
               strictMode: bot.strictMode,
               allowGeneralAnswer: bot.allowGeneralAnswer,
               botLanguage: bot.language,
-              preferredLanguage: input.language,
+              preferredLanguage: responseLanguage,
               maxAnswerLength: bot.maxAnswerLength
             }),
             temperature: bot.temperature,
             maxTokens: Math.max(128, Math.ceil(bot.maxAnswerLength / 4))
           })
-        ).content || bot.fallbackMessage;
+        ).content || fallbackMessage;
   }
 
   const conversation =

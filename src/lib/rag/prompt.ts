@@ -55,11 +55,11 @@ export function buildRagMessages(input: {
 
   const languageInstruction =
     input.preferredLanguage === "ar"
-      ? "Answer in Arabic unless the user explicitly asks for another language."
+      ? "The user language is Arabic. Answer only in Arabic unless the user explicitly asks for another language. If the retrieved context is in another language, summarize it in Arabic. Do not answer in English."
       : input.preferredLanguage === "en"
-        ? "Answer in English unless the user explicitly asks for another language."
+        ? "The user language is English. Answer only in English unless the user explicitly asks for another language."
         : input.botLanguage?.toLowerCase().startsWith("ar")
-          ? "Answer in Arabic unless the user explicitly asks for another language."
+          ? "The bot language is Arabic. Answer only in Arabic unless the user explicitly asks for another language. If the retrieved context is in another language, summarize it in Arabic. Do not answer in English."
           : "Answer in the same language as the user when possible.";
 
   const system = [
