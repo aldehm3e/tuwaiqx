@@ -4,12 +4,12 @@ import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { reindexDocument } from "@/src/lib/documents/indexer";
 import { auditLog } from "@/src/lib/services/audit";
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_knowledge");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const document = await reindexDocument(id);
     await auditLog({
       userId: guard.admin!.id,

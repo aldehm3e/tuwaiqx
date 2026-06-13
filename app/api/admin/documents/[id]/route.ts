@@ -5,12 +5,12 @@ import { removeStoredObject } from "@/src/lib/documents/storage";
 import { auditLog } from "@/src/lib/services/audit";
 import { errorResponse } from "@/src/lib/api/errors";
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(_request, "manage_knowledge");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const document = await prisma.document.findUniqueOrThrow({
       where: { id },
       select: { id: true, storageKey: true, title: true }

@@ -5,12 +5,12 @@ import { errorResponse } from "@/src/lib/api/errors";
 import { prisma } from "@/src/lib/db/prisma";
 import { auditLog } from "@/src/lib/services/audit";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_integrations");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const provider = await prisma.modelProvider.findUniqueOrThrow({ where: { id } });
     const health = await providerFromDb(provider).healthCheck();
     await prisma.modelProvider.update({
@@ -34,12 +34,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_integrations");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const providerCount = await prisma.modelProvider.count();
     if (providerCount <= 1) {
       return NextResponse.json({ error: "At least one provider must remain." }, { status: 400 });

@@ -1,3 +1,4 @@
+import type { ModelProvider } from "@prisma/client";
 import { LocalModelUploadForm, ProviderForm } from "@/src/components/admin/Forms";
 import { DeleteAction } from "@/src/components/admin/DeleteAction";
 import { ProviderActions } from "@/src/components/admin/ProviderActions";
@@ -30,6 +31,49 @@ function shortHash(hash: string) {
   return `${hash.slice(0, 12)}...${hash.slice(-8)}`;
 }
 
+function healthTone(status: string | null) {
+  if (status === "ok") return "good";
+  if (status === "failed") return "danger";
+  return "warn";
+}
+
+function hasLoopbackBaseUrl(value: string | null) {
+  if (!value) return false;
+  return /(^https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\])/i.test(value);
+}
+
+function providerDiagnostics(provider: ModelProvider, settings: { defaultChatProviderId: string | null; defaultEmbeddingProviderId: string | null } | null) {
+  const isDefaultChat = settings?.defaultChatProviderId === provider.id || provider.isDefaultChat;
+  const isDefaultEmbedding = settings?.defaultEmbeddingProviderId === provider.id || provider.isDefaultEmbedding;
+  const items: Array<{ tone: "good" | "warn" | "danger" | "neutral"; label: string }> = [];
+
+  if (!provider.isEnabled) {
+    items.push({ tone: "warn", label: "Disabled" });
+  }
+  if (provider.type !== "MOCK" && !provider.baseUrl) {
+    items.push({ tone: "danger", label: "Base URL missing" });
+  }
+  if (provider.type !== "MOCK" && hasLoopbackBaseUrl(provider.baseUrl)) {
+    items.push({ tone: "warn", label: "Docker URL check" });
+  }
+  if (isDefaultChat && !provider.chatModel) {
+    items.push({ tone: "danger", label: "Chat model missing" });
+  }
+  if (isDefaultEmbedding && !provider.embeddingModel) {
+    items.push({ tone: "danger", label: "Embedding model missing" });
+  }
+  if (provider.lastHealthStatus === "failed") {
+    items.push({ tone: "danger", label: "Health failed" });
+  } else if (!provider.lastHealthStatus) {
+    items.push({ tone: "warn", label: "Not tested" });
+  }
+  if (!isDefaultChat && !isDefaultEmbedding) {
+    items.push({ tone: "neutral", label: "Not default" });
+  }
+
+  return items.length ? items : [{ tone: "good" as const, label: "Ready" }];
+}
+
 export default async function ModelsPage() {
   const [providers, localModels, settings] = await Promise.all([
     prisma.modelProvider.findMany({ orderBy: { createdAt: "desc" } }),
@@ -46,6 +90,11 @@ export default async function ModelsPage() {
   const defaultEmbeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text";
   const modelStoragePath = process.env.MODEL_STORAGE_PATH || "./models";
   const localRuntimeBaseUrl = process.env.LOCAL_RUNTIME_BASE_URL || "http://localai:8080/v1";
+  const defaultChatProvider = providers.find((provider) => provider.id === settings?.defaultChatProviderId || provider.isDefaultChat);
+  const defaultEmbeddingProvider = providers.find((provider) => provider.id === settings?.defaultEmbeddingProviderId || provider.isDefaultEmbedding);
+  const healthyProviders = providers.filter((provider) => provider.lastHealthStatus === "ok").length;
+  const failedProviders = providers.filter((provider) => provider.lastHealthStatus === "failed").length;
+  const untestedProviders = providers.filter((provider) => !provider.lastHealthStatus).length;
 
   return (
     <div className="space-y-6">
@@ -53,6 +102,38 @@ export default async function ModelsPage() {
         title="Model providers"
         description="Connect Ollama, an external OpenAI-compatible API, or a local runtime such as LM Studio, llama.cpp, LocalAI, vLLM, or SGLang. TuwaiqX manages admin, bots, and knowledge; the runtime serves chat and embeddings."
       />
+      <Panel>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Provider diagnostics</h2>
+          <p className="text-sm leading-6 text-slate-600">Use this before uploading knowledge or testing bots. Chat and embeddings can use different providers, but both need reachable runtimes and exact model names.</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="rounded-lg border border-la-line bg-la-surface p-4">
+            <div className="text-xs font-semibold uppercase text-slate-500">Default chat</div>
+            <div className="mt-2 font-semibold">{defaultChatProvider?.name || "Not selected"}</div>
+            <p className="mt-1 text-xs leading-5 text-slate-600">{defaultChatProvider?.chatModel || "Choose a provider and chat model."}</p>
+          </div>
+          <div className="rounded-lg border border-la-line bg-la-surface p-4">
+            <div className="text-xs font-semibold uppercase text-slate-500">Default embeddings</div>
+            <div className="mt-2 font-semibold">{defaultEmbeddingProvider?.name || "Not selected"}</div>
+            <p className="mt-1 text-xs leading-5 text-slate-600">{defaultEmbeddingProvider?.embeddingModel || "Choose an embedding provider before indexing."}</p>
+          </div>
+          <div className="rounded-lg border border-la-line bg-la-surface p-4">
+            <div className="text-xs font-semibold uppercase text-slate-500">Health state</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge tone={healthyProviders ? "good" : "neutral"}>{healthyProviders} healthy</Badge>
+              <Badge tone={failedProviders ? "danger" : "neutral"}>{failedProviders} failed</Badge>
+              <Badge tone={untestedProviders ? "warn" : "neutral"}>{untestedProviders} untested</Badge>
+            </div>
+          </div>
+          <div className="rounded-lg border border-la-line bg-la-surface p-4">
+            <div className="text-xs font-semibold uppercase text-slate-500">Docker URL hint</div>
+            <p className="mt-2 text-xs leading-5 text-slate-600">
+              Docker-to-host runtimes should use <code className="rounded bg-white px-1 py-0.5">host.docker.internal</code>. Docker services should use their service name.
+            </p>
+          </div>
+        </div>
+      </Panel>
       <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">
         <Panel>
           <div className="overflow-x-auto">
@@ -65,6 +146,7 @@ export default async function ModelsPage() {
                   <th className="py-3 pr-3">Models</th>
                   <th className="py-3 pr-3">Defaults</th>
                   <th className="py-3 pr-3">Health</th>
+                  <th className="py-3 pr-3">Diagnostics</th>
                   <th className="py-3 pr-3">Actions</th>
                 </tr>
               </thead>
@@ -84,7 +166,14 @@ export default async function ModelsPage() {
                       </div>
                     </td>
                     <td className="py-3 pr-3">
-                      <Badge tone={provider.lastHealthStatus === "ok" ? "good" : "neutral"}>{provider.lastHealthStatus || "not tested"}</Badge>
+                      <Badge tone={healthTone(provider.lastHealthStatus)}>{provider.lastHealthStatus || "not tested"}</Badge>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <div className="flex max-w-xs flex-wrap gap-2">
+                        {providerDiagnostics(provider, settings).map((item) => (
+                          <Badge key={`${provider.id}-${item.label}`} tone={item.tone}>{item.label}</Badge>
+                        ))}
+                      </div>
                     </td>
                     <td className="py-3 pr-3">
                       <ProviderActions id={provider.id} name={provider.name} />

@@ -166,11 +166,29 @@ export function BotTester({ bots }: { bots: BotTesterBot[] }) {
         )}
       </div>
       {selectedBot?.quickActions.length ? (
-        <div dir={selectedBot.direction} className="mt-3 flex flex-wrap gap-2">
-          {selectedBot.quickActions.map((action) => (
+        <div
+          dir={selectedBot.direction}
+          className="mt-3 max-w-full pb-2"
+          style={{
+            display: "flex",
+            flexWrap: "nowrap",
+            gap: "0.5rem",
+            overflowX: "auto",
+            overflowY: "hidden",
+            scrollbarWidth: "thin"
+          }}
+        >
+          {selectedBot.quickActions.map((action, index) => (
             <button
-              key={action}
+              key={`${action}-${index}`}
               className={secondaryButtonClass}
+              style={{
+                flex: "0 0 auto",
+                maxWidth: "16rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
               type="button"
               disabled={loading}
               onClick={() => void sendMessage(action)}

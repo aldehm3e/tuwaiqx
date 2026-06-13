@@ -169,7 +169,15 @@ export function BotForm({
     <SmartForm action={action} method={action.includes("/api/admin/bots/") ? "PUT" : "POST"} redirectTo={redirectTo} submitLabel="Save bot" className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Slug">
-          <input className={inputClass} name="slug" required placeholder="main" />
+          <input
+            autoCapitalize="none"
+            className={inputClass}
+            name="slug"
+            pattern="[a-z0-9-]{2,80}"
+            required
+            title="Use 2-80 lowercase letters, numbers, and hyphens only."
+            placeholder="main"
+          />
         </Field>
         <Field label="Name">
           <input className={inputClass} name="name" required placeholder="Main Website Assistant" />
@@ -178,7 +186,7 @@ export function BotForm({
           <input className={inputClass} name="description" />
         </Field>
         <Field label="Avatar URL">
-          <input className={inputClass} name="avatarUrl" />
+          <input className={inputClass} name="avatarUrl" type="url" />
         </Field>
         <Field label="Welcome message">
           <input className={inputClass} name="welcomeMessage" defaultValue="Hello. How can I help?" />
@@ -187,7 +195,7 @@ export function BotForm({
           <input className={inputClass} name="fallbackMessage" defaultValue="I could not find that information in the approved knowledge base." />
         </Field>
         <Field label="Primary color">
-          <input className={inputClass} name="primaryColor" defaultValue="#0f7b55" />
+          <input className={inputClass} name="primaryColor" type="color" defaultValue="#0f7b55" />
         </Field>
         <Field label="Language">
           <input className={inputClass} name="language" defaultValue="en" />
@@ -225,7 +233,7 @@ export function BotForm({
           </select>
         </Field>
         <Field label="Max answer length">
-          <input className={inputClass} name="maxAnswerLength" type="number" defaultValue={800} />
+          <input className={inputClass} name="maxAnswerLength" type="number" min="100" max="4000" defaultValue={800} />
         </Field>
         <Field label="Temperature">
           <input className={inputClass} name="temperature" type="number" min="0" max="2" step="0.1" defaultValue="0.2" />

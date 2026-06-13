@@ -62,6 +62,8 @@ export const localModelUploadSchema = z.object({
 export const botSchema = z.object({
   slug: z
     .string()
+    .trim()
+    .toLowerCase()
     .min(2)
     .max(80)
     .regex(/^[a-z0-9-]+$/),

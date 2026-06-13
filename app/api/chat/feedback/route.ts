@@ -16,9 +16,10 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let headers: Awaited<ReturnType<typeof corsHeaders>> | null = null;
   try {
     const input = feedbackSchema.parse(await request.json());
-    const headers = await corsHeaders(request);
+    headers = await corsHeaders(request);
     if (!headers) return NextResponse.json({ error: "Origin is not allowed." }, { status: 403 });
     await prisma.message.update({
       where: { id: input.messageId },
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ message: "Feedback saved." }, { headers });
   } catch (error) {
-    return errorResponse(error);
+    headers ||= await corsHeaders(request);
+    return errorResponse(error, 400, headers || undefined);
   }
 }
-

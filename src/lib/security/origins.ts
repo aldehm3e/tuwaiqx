@@ -41,7 +41,7 @@ function isSameLoopback(candidate: string, appHost: string) {
 export async function isOriginAllowed(origin: string | null, pageUrl?: string | null) {
   const allowedDomains = await prisma.allowedDomain.findMany();
   const appHost = normalizeHost(getEnv().APP_URL);
-  const candidates = [origin, pageUrl].filter(Boolean).map((value) => normalizeHost(value as string));
+  const candidates = origin ? [normalizeHost(origin)] : [pageUrl].filter(Boolean).map((value) => normalizeHost(value as string));
 
   if (candidates.some((candidate) => candidate === appHost)) {
     return true;

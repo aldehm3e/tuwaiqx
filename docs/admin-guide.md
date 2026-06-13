@@ -35,6 +35,8 @@ Chat and embedding providers can be separate. If you change the embedding provid
 
 Create bots at `/admin/bots/new`. Configure strict mode, source display, prompt, provider, language, direction, widget color, quick actions, and embed position.
 
+Use `/admin/embed` after creating a bot. Each bot shows a default script for a simple install and a fully customizable embed example for frontend teams that need to control the launcher, panel, colors, quick actions, input, buttons, mobile sizing, and exposed Shadow DOM parts.
+
 ## Conversations and Gaps
 
 Conversation logs are in `/admin/conversations`. Fallbacks create knowledge gaps visible through analytics and dashboard counts.

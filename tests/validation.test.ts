@@ -23,6 +23,20 @@ describe("validation schemas", () => {
     ).toThrow();
   });
 
+  it("normalizes bot slugs", () => {
+    const parsed = botSchema.parse({
+      slug: " Main-Bot ",
+      name: "Main Bot",
+      welcomeMessage: "Hi",
+      fallbackMessage: "Fallback",
+      systemPrompt: "Prompt",
+      primaryColor: "#0f7b55",
+      language: "en",
+      direction: "ltr"
+    });
+    expect(parsed.slug).toBe("main-bot");
+  });
+
   it("accepts optional public chat language", () => {
     const parsed = chatSchema.parse({ botId: "main", message: "Hello", language: "en" });
     expect(parsed.language).toBe("en");

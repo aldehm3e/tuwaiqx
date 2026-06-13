@@ -55,12 +55,12 @@ async function assertCanChangeUserAccess(userId: string, currentUserId: string) 
   return user;
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_users");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const input = userStatusSchema.parse(await request.json());
 
     if (!input.isActive) {
@@ -85,12 +85,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_users");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const target = await assertCanChangeUserAccess(id, guard.admin!.id);
     await prisma.adminUser.delete({ where: { id } });
 

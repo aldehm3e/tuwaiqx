@@ -15,13 +15,13 @@ export function SetupForm() {
           <input className={inputClass} minLength={10} name="adminPassword" required type="password" />
         </Field>
         <Field label="Organization name">
-          <input className={inputClass} name="organizationName" required defaultValue="Peaceful Aid NGO" />
+          <input className={inputClass} name="organizationName" required placeholder="Your organization name" />
         </Field>
         <Field label="Website URL">
-          <input className={inputClass} name="websiteUrl" required type="url" defaultValue="https://example.org" />
+          <input className={inputClass} name="websiteUrl" required type="url" placeholder="https://www.organization.org" />
         </Field>
         <Field label="Allowed domains" hint="Comma or newline separated domains for the widget.">
-          <input className={inputClass} name="allowedDomains" defaultValue="example.org" />
+          <input className={inputClass} name="allowedDomains" placeholder="www.organization.org" />
         </Field>
         <Field label="Default language">
           <input className={inputClass} name="defaultLanguage" defaultValue="en" />

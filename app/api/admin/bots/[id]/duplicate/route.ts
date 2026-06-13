@@ -4,11 +4,11 @@ import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { prisma } from "@/src/lib/db/prisma";
 import { auditLog } from "@/src/lib/services/audit";
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_bots");
   if (guard.response) return guard.response;
 
-  const { id } = await params;
+  const { id } = (await params) as { id: string };
   const source = await prisma.bot.findUniqueOrThrow({ where: { id } });
   const bot = await prisma.bot.create({
     data: {

@@ -1,9 +1,45 @@
 import fs from "node:fs/promises";
+import type { ModelProvider } from "@prisma/client";
 import { prisma } from "@/src/lib/db/prisma";
 import { getEnv } from "@/src/lib/config/env";
 import { defaultProviderFromEnv, providerFromDb } from "@/src/lib/ai/factory";
 
-export async function getSystemHealth() {
+async function checkProviderRuntime(provider: ModelProvider) {
+  try {
+    const result = await providerFromDb(provider).healthCheck();
+    return {
+      id: provider.id,
+      name: provider.name,
+      type: provider.type,
+      baseUrl: provider.baseUrl,
+      chatModel: provider.chatModel,
+      embeddingModel: provider.embeddingModel,
+      isDefaultChat: provider.isDefaultChat,
+      isDefaultEmbedding: provider.isDefaultEmbedding,
+      ok: result.ok,
+      message: result.message
+    };
+  } catch (error) {
+    return {
+      id: provider.id,
+      name: provider.name,
+      type: provider.type,
+      baseUrl: provider.baseUrl,
+      chatModel: provider.chatModel,
+      embeddingModel: provider.embeddingModel,
+      isDefaultChat: provider.isDefaultChat,
+      isDefaultEmbedding: provider.isDefaultEmbedding,
+      ok: false,
+      message: error instanceof Error ? error.message : "Runtime check failed"
+    };
+  }
+}
+
+type SystemHealthOptions = {
+  includeProviders?: boolean;
+};
+
+export async function getSystemHealth(options: SystemHealthOptions = {}) {
   const env = getEnv();
   const checks = {
     database: false,
@@ -57,7 +93,7 @@ export async function getSystemHealth() {
 
   try {
     const settings = await prisma.appSettings.findFirst({
-      select: { defaultChatProviderId: true }
+      select: { defaultChatProviderId: true, defaultEmbeddingProviderId: true }
     });
     const configuredProvider = settings?.defaultChatProviderId
       ? await prisma.modelProvider.findUnique({ where: { id: settings.defaultChatProviderId } })
@@ -69,9 +105,21 @@ export async function getSystemHealth() {
     messages.model = error instanceof Error ? error.message : "Model check failed";
   }
 
+  const providerHealth = options.includeProviders
+    ? await Promise.all(
+        (
+          await prisma.modelProvider.findMany({
+            where: { isEnabled: true },
+            orderBy: { createdAt: "asc" }
+          })
+        ).map(checkProviderRuntime)
+      )
+    : [];
+
   return {
     ok: Object.values(checks).every(Boolean),
     checks,
-    messages
+    messages,
+    providers: providerHealth
   };
 }

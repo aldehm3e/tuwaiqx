@@ -137,6 +137,8 @@ Go to `/admin/embed` and copy:
 
 Add the host website domain in `/admin/settings` before production use.
 
+The embed page also provides a fully customizable example for frontend teams. It exposes supported `data-*` attributes and Shadow DOM `::part(...)` selectors for changing the launcher, panel, colors, quick actions, input, buttons, sizing, and mobile styling without changing TuwaiqX settings.
+
 ## Admin Dashboard
 
 Important routes:
@@ -182,6 +184,7 @@ docker compose exec tuwaiqx-web npm run migrate:deploy
 - Put TuwaiqX behind HTTPS in production.
 - Restrict `/admin` with network controls where possible.
 - Configure allowed widget domains.
+- Keep PostgreSQL, Redis, MinIO, Ollama, and LocalAI on a private network.
 - Rotate provider keys through `/admin/models`.
 - Keep backups encrypted and access controlled.
 

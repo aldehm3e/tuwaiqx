@@ -6,12 +6,12 @@ import { auditLog } from "@/src/lib/services/audit";
 import { botSchema } from "@/src/lib/validation/schemas";
 import { splitLines } from "@/src/lib/utils/forms";
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_bots");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const input = botSchema.parse(await request.json());
     const bot = await prisma.bot.update({
       where: { id },
@@ -50,12 +50,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_bots");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const bot = await prisma.bot.delete({
       where: { id },
       select: { id: true, name: true }

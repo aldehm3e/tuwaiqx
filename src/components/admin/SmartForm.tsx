@@ -14,6 +14,15 @@ type SmartFormProps = {
   className?: string;
 };
 
+type ApiResponse = {
+  error?: string;
+  message?: string;
+  details?: {
+    formErrors?: string[];
+    fieldErrors?: Record<string, string[] | undefined>;
+  };
+};
+
 function formDataToJson(form: HTMLFormElement) {
   const formData = new FormData(form);
   const payload: Record<string, FormDataEntryValue | boolean> = {};
@@ -24,6 +33,20 @@ function formDataToJson(form: HTMLFormElement) {
     payload[element.name] = element.checked;
   }
   return payload;
+}
+
+function responseErrorMessage(data: ApiResponse) {
+  const fieldErrors = data.details?.fieldErrors
+    ? Object.entries(data.details.fieldErrors)
+        .flatMap(([field, errors]) => (errors || []).map((error) => `${field}: ${error}`))
+    : [];
+  const formErrors = data.details?.formErrors || [];
+  const details = [...formErrors, ...fieldErrors];
+  if (details.length) {
+    return details.join(" ");
+  }
+
+  return data.error || "The request failed.";
 }
 
 export function SmartForm({
@@ -54,9 +77,9 @@ export function SmartForm({
           body: encType === "json" ? JSON.stringify(formDataToJson(form)) : formData
         });
 
-        const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+        const data = (await response.json().catch(() => ({}))) as ApiResponse;
         if (!response.ok) {
-          setState({ loading: false, error: data.error || "The request failed." });
+          setState({ loading: false, error: responseErrorMessage(data) });
           return;
         }
 

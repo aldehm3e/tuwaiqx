@@ -13,6 +13,7 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       type: "index_document",
       status: "running",
       entityId: documentId,
+      progress: 5,
       startedAt: new Date()
     }
   });
@@ -29,6 +30,10 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "parsing", errorMessage: null }
+    });
+    await prisma.systemJob.update({
+      where: { id: job.id },
+      data: { progress: 15 }
     });
 
     const parsed =
@@ -50,6 +55,10 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       where: { id: documentId },
       data: { status: "indexing" }
     });
+    await prisma.systemJob.update({
+      where: { id: job.id },
+      data: { progress: 35 }
+    });
 
     await prisma.documentChunk.deleteMany({ where: { documentId } });
     const chunks = chunkText(text);
@@ -64,6 +73,7 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       : null;
     const provider = providerFromDb(document.bot?.embeddingProvider || defaultEmbeddingProvider || document.bot?.modelProvider);
     const canStoreEmbeddings = await isPgVectorAvailable();
+    const progressInterval = Math.max(1, Math.ceil(chunks.length / 10));
 
     for (const [index, chunk] of chunks.entries()) {
       const savedChunk = await prisma.documentChunk.create({
@@ -91,6 +101,13 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
             console.warn("Embedding failed; full-text fallback remains available.", error);
           }
         }
+      }
+
+      if ((index + 1) % progressInterval === 0 || index === chunks.length - 1) {
+        await prisma.systemJob.update({
+          where: { id: job.id },
+          data: { progress: Math.min(95, 35 + Math.round(((index + 1) / chunks.length) * 60)) }
+        });
       }
     }
 

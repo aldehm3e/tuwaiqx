@@ -5,12 +5,12 @@ import { prisma } from "@/src/lib/db/prisma";
 import { auditLog } from "@/src/lib/services/audit";
 import { ticketUpdateSchema } from "@/src/lib/validation/schemas";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_tickets");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const input = ticketUpdateSchema.parse(await request.json());
     const ticket = await prisma.ticket.update({
       where: { id },

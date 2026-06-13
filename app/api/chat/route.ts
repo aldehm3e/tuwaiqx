@@ -12,10 +12,11 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let headers: Awaited<ReturnType<typeof corsHeaders>> | null = null;
   try {
     const json = await request.json();
     const input = chatSchema.parse(json);
-    const headers = await corsHeaders(request, input.pageUrl);
+    headers = await corsHeaders(request, input.pageUrl);
     if (!headers) {
       return NextResponse.json({ error: "Origin is not allowed." }, { status: 403 });
     }
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const answer = await answerQuestion(input);
     return NextResponse.json(answer, { headers });
   } catch (error) {
-    return errorResponse(error);
+    headers ||= await corsHeaders(request);
+    return errorResponse(error, 400, headers || undefined);
   }
 }
-

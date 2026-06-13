@@ -5,12 +5,12 @@ import { prisma } from "@/src/lib/db/prisma";
 import { removeLocalAiConfig, removeLocalModelFile } from "@/src/lib/models/storage";
 import { auditLog } from "@/src/lib/services/audit";
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<unknown> }) {
   const guard = await requireAdminRequest(request, "manage_integrations");
   if (guard.response) return guard.response;
 
   try {
-    const { id } = await params;
+    const { id } = (await params) as { id: string };
     const modelFile = await prisma.localModelFile.findUniqueOrThrow({
       where: { id },
       select: { id: true, name: true, storageKey: true, kind: true, format: true }
