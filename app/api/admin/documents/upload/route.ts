@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { storeUpload } from "@/src/lib/documents/storage";
 import { indexDocument } from "@/src/lib/documents/indexer";
@@ -11,6 +11,18 @@ const maxBytes = 25 * 1024 * 1024;
 
 function extension(filename: string) {
   return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+function scheduleUploadedDocumentIndexing(documentIds: string[]) {
+  after(async () => {
+    for (const documentId of documentIds) {
+      try {
+        await indexDocument(documentId);
+      } catch (error) {
+        console.error(`Failed to index uploaded document ${documentId}`, error);
+      }
+    }
+  });
 }
 
 export async function POST(request: Request) {
@@ -49,7 +61,6 @@ export async function POST(request: Request) {
         createdById: guard.admin!.id
       }
     });
-    await indexDocument(document.id, buffer);
     created.push(document.id);
     await auditLog({
       userId: guard.admin!.id,
@@ -59,5 +70,7 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ message: `${created.length} document(s) uploaded and indexed.`, ids: created });
+  scheduleUploadedDocumentIndexing(created);
+
+  return NextResponse.json({ message: `${created.length} document(s) uploaded. Indexing is running in the background.`, ids: created });
 }

@@ -313,7 +313,7 @@ export function ManualKnowledgeForm({ bots }: { bots: Array<{ id: string; name: 
 
 export function UploadKnowledgeForm({ bots }: { bots: Array<{ id: string; name: string }> }) {
   return (
-    <SmartForm action="/api/admin/documents/upload" encType="multipart" redirectTo="/admin/knowledge" submitLabel="Upload and index" className="space-y-4">
+    <SmartForm action="/api/admin/documents/upload" encType="multipart" redirectTo="/admin/knowledge" submitLabel="Upload and start indexing" className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Bot assignment">
           <select className={inputClass} name="botId" defaultValue="">

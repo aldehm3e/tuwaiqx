@@ -36,10 +36,11 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       data: { progress: 15 }
     });
 
+    const sourceBuffer = buffer || (document.storageKey ? await readStoredObject(document.storageKey) : undefined);
     const parsed =
-      buffer &&
+      sourceBuffer &&
       (await parseDocument({
-        buffer,
+        buffer: sourceBuffer,
         filename: document.filename,
         mimeType: document.mimeType
       }));
@@ -47,7 +48,7 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
     const text = readableTextForIndexing({
       parsedText: parsed?.text,
       fallbackTitle: document.title,
-      parsedFromFile: Boolean(buffer),
+      parsedFromFile: Boolean(sourceBuffer),
       filename: document.filename,
       mimeType: document.mimeType
     });
