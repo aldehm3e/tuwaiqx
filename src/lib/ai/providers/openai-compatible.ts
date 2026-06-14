@@ -18,8 +18,8 @@ export class OpenAICompatibleProvider implements AiProvider {
     this.name = config.name || "OpenAI-compatible";
     this.baseUrl = (config.baseUrl || "").replace(/\/$/, "");
     this.apiKey = config.apiKey;
-    this.chatModel = config.chatModel || "gpt-4o-mini";
-    this.embeddingModel = config.embeddingModel || "text-embedding-3-small";
+    this.chatModel = config.chatModel?.trim() || "";
+    this.embeddingModel = config.embeddingModel?.trim() || "";
   }
 
   private headers() {
@@ -32,6 +32,9 @@ export class OpenAICompatibleProvider implements AiProvider {
   async complete(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     if (!this.baseUrl) {
       throw new Error("OpenAI-compatible base URL is not configured.");
+    }
+    if (!this.chatModel) {
+      throw new Error("OpenAI-compatible chat model is not configured.");
     }
 
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -56,6 +59,9 @@ export class OpenAICompatibleProvider implements AiProvider {
   async embed(request: EmbeddingRequest): Promise<EmbeddingResponse> {
     if (!this.baseUrl) {
       throw new Error("OpenAI-compatible base URL is not configured.");
+    }
+    if (!this.embeddingModel) {
+      throw new Error("OpenAI-compatible embedding model is not configured.");
     }
 
     const response = await fetch(`${this.baseUrl}/embeddings`, {
@@ -100,4 +106,3 @@ export class OpenAICompatibleProvider implements AiProvider {
     }
   }
 }
-

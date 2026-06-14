@@ -42,18 +42,10 @@ function hasLoopbackBaseUrl(value: string | null) {
   return /(^https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\])/i.test(value);
 }
 
-function knownEmbeddingDimension(model?: string | null) {
-  const normalized = model?.toLowerCase() || "";
-  if (normalized.includes("nomic-embed-text")) return "768-dim";
-  if (normalized.includes("bge-m3")) return "1024-dim";
-  return null;
-}
-
 function providerDiagnostics(provider: ModelProvider, settings: { defaultChatProviderId: string | null; defaultEmbeddingProviderId: string | null } | null) {
   const isDefaultChat = settings?.defaultChatProviderId === provider.id || provider.isDefaultChat;
   const isDefaultEmbedding = settings?.defaultEmbeddingProviderId === provider.id || provider.isDefaultEmbedding;
   const items: Array<{ tone: "good" | "warn" | "danger" | "neutral"; label: string }> = [];
-  const embeddingDimension = knownEmbeddingDimension(provider.embeddingModel);
 
   if (!provider.isEnabled) {
     items.push({ tone: "warn", label: "Disabled" });
@@ -75,9 +67,6 @@ function providerDiagnostics(provider: ModelProvider, settings: { defaultChatPro
   } else if (!provider.lastHealthStatus) {
     items.push({ tone: "warn", label: "Not tested" });
   }
-  if (embeddingDimension) {
-    items.push({ tone: "neutral", label: embeddingDimension });
-  }
   if (!isDefaultChat && !isDefaultEmbedding) {
     items.push({ tone: "neutral", label: "Not default" });
   }
@@ -97,8 +86,8 @@ export default async function ModelsPage() {
     })
   ]);
   const defaultBaseUrl = process.env.OLLAMA_BASE_URL || "http://ollama:11434";
-  const defaultChatModel = process.env.OLLAMA_CHAT_MODEL || "llama3.1";
-  const defaultEmbeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text";
+  const defaultChatModel = process.env.OLLAMA_CHAT_MODEL || "";
+  const defaultEmbeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || "";
   const modelStoragePath = process.env.MODEL_STORAGE_PATH || "./models";
   const localRuntimeBaseUrl = process.env.LOCAL_RUNTIME_BASE_URL || "http://localai:8080/v1";
   const defaultChatProvider = providers.find((provider) => provider.id === settings?.defaultChatProviderId || provider.isDefaultChat);
@@ -145,10 +134,9 @@ export default async function ModelsPage() {
           </div>
         </div>
         <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-          Stable Ollama pairing: <strong>qwen3:30b</strong> with <strong>nomic-embed-text</strong>. Multilingual advanced pairing:
-          <strong> qwen3:30b</strong> with <strong>bge-m3</strong>; bge-m3 uses 1024-dimensional embeddings, so re-index knowledge after switching from
-          nomic-embed-text. If qwen3:30b returns <code className="rounded bg-white px-1 py-0.5">signal: killed</code>, increase Docker/Ollama memory,
-          enable GPU support, or use a smaller chat model.
+          TuwaiqX works with any runtime that exposes compatible chat and embedding endpoints. Use exact model names from your runtime, keep chat and embedding providers
+          reachable from the web container, and re-index knowledge after changing embedding models because vector dimensions can differ. Large local models may need more
+          Docker/Ollama memory, GPU support, longer timeouts, or a smaller model.
         </div>
       </Panel>
       <div className="grid gap-6 xl:grid-cols-[1fr_28rem]">

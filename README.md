@@ -63,8 +63,8 @@ To start Ollama with the stack:
 
 ```bash
 docker compose --profile ollama up -d
-docker compose exec tuwaiqx-ollama ollama pull llama3.1
-docker compose exec tuwaiqx-ollama ollama pull nomic-embed-text
+docker compose exec tuwaiqx-ollama ollama pull <chat-model>
+docker compose exec tuwaiqx-ollama ollama pull <embedding-model>
 ```
 
 To start the optional LocalAI runtime for uploaded `.gguf` files:
@@ -110,16 +110,11 @@ The default path is Ollama:
 ```env
 DEFAULT_MODEL_PROVIDER=ollama
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_CHAT_MODEL=llama3.1
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_CHAT_MODEL=<chat-model>
+OLLAMA_EMBEDDING_MODEL=<embedding-model>
 ```
 
-Recommended Ollama combinations:
-
-- Stable: `OLLAMA_CHAT_MODEL=qwen3:30b` with `OLLAMA_EMBEDDING_MODEL=nomic-embed-text`.
-- Multilingual advanced: `OLLAMA_CHAT_MODEL=qwen3:30b` with `OLLAMA_EMBEDDING_MODEL=bge-m3`.
-
-`nomic-embed-text` returns 768-dimensional embeddings. `bge-m3` returns 1024-dimensional embeddings. TuwaiqX supports mixed historical dimensions by only comparing vectors with the same dimension, but you should re-index knowledge after changing embedding models so semantic retrieval uses the new model. For `qwen3:30b` plus an embedding model in Docker, give Docker Desktop enough memory and keep `OLLAMA_MAX_LOADED_MODELS=2` so Ollama can keep both models warm. If Ollama returns `llama-server process has terminated: signal: killed` for `qwen3:30b`, Docker/Ollama likely does not have enough memory for that chat model; increase Docker Desktop memory, enable GPU support, or use a smaller chat model. If qwen returns thinking but no final answer, increase `OLLAMA_CHAT_MIN_PREDICT`.
+Use any compatible chat and embedding models supported by your runtime. Embedding dimensions can differ between models; TuwaiqX only compares vectors with the same dimension, but you should re-index knowledge after changing embedding models so semantic retrieval uses the new model. Large local chat models may require more Docker/Ollama memory, GPU support, longer timeouts, or a smaller model. If a thinking model returns no final answer, increase `OLLAMA_CHAT_MIN_PREDICT`.
 
 Optional OpenAI-compatible endpoints are configured in the admin dashboard or `.env`. TuwaiqX does not hardcode one paid vendor.
 

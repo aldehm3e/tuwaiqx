@@ -19,7 +19,7 @@ Important variables:
 - `OLLAMA_EMBEDDING_MODEL`: default Ollama embedding model.
 - `OLLAMA_CHAT_TIMEOUT_MS`: chat request timeout for slow local Ollama models. Default is `360000`.
 - `OLLAMA_EMBEDDING_TIMEOUT_MS`: embedding request timeout for Ollama embedding models. Default is `120000`.
-- `OLLAMA_CHAT_MIN_PREDICT`: minimum Ollama `num_predict` budget for chat requests. Default is `1024`, which gives thinking models such as `qwen3:30b` enough room to produce a final answer.
+- `OLLAMA_CHAT_MIN_PREDICT`: minimum Ollama `num_predict` budget for chat requests. Default is `1024`, which gives thinking models enough room to produce a final answer.
 - `OLLAMA_MAX_LOADED_MODELS`: Ollama model residency limit. Default Docker value is `2` so one chat model and one embedding model can stay warm.
 - `LOCAL_RUNTIME_BASE_URL`: default OpenAI-compatible URL for the optional local runtime profile. Docker default is `http://localai:8080/v1`.
 - `LOCALAI_IMAGE_TAG`: LocalAI Docker image tag for `docker compose --profile local-models up -d`.

@@ -141,19 +141,19 @@ For the simplest fully local Docker setup, use the Ollama profile:
 
 ```env
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_CHAT_MODEL=qwen2.5:0.5b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_CHAT_MODEL=<chat-model>
+OLLAMA_EMBEDDING_MODEL=<embedding-model>
 ```
 
 Then start the stack with Ollama and pull the models:
 
 ```bash
 docker compose --profile ollama up -d --build
-docker compose exec tuwaiqx-ollama ollama pull qwen2.5:0.5b
-docker compose exec tuwaiqx-ollama ollama pull nomic-embed-text
+docker compose exec tuwaiqx-ollama ollama pull <chat-model>
+docker compose exec tuwaiqx-ollama ollama pull <embedding-model>
 ```
 
-For better Arabic production quality, use stronger Arabic-capable chat and embedding models if the server hardware supports them.
+Choose chat and embedding models that fit your language needs and server hardware.
 
 If using an external or separately managed OpenAI-compatible runtime, start TuwaiqX without the Ollama profile:
 
@@ -365,8 +365,8 @@ If the runtime is on another server, use its private network URL and make sure t
 
 ```bash
 docker compose --profile ollama up -d
-docker compose exec tuwaiqx-ollama ollama pull llama3.1
-docker compose exec tuwaiqx-ollama ollama pull nomic-embed-text
+docker compose exec tuwaiqx-ollama ollama pull <chat-model>
+docker compose exec tuwaiqx-ollama ollama pull <embedding-model>
 ```
 
 ## Optional Local Model Files
@@ -584,16 +584,16 @@ TuwaiqX needs a model provider for chat and embeddings. In a manual install, the
 For Ollama on the same server, install Ollama using the entity-approved method, then:
 
 ```bash
-ollama pull qwen2.5:0.5b
-ollama pull nomic-embed-text
+ollama pull <chat-model>
+ollama pull <embedding-model>
 ```
 
 Set:
 
 ```env
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_CHAT_MODEL=qwen2.5:0.5b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_CHAT_MODEL=<chat-model>
+OLLAMA_EMBEDDING_MODEL=<embedding-model>
 ```
 
 Then restart TuwaiqX:

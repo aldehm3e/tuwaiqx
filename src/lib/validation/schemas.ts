@@ -15,8 +15,8 @@ export const setupSchema = z.object({
   providerType: z.enum(["OLLAMA", "OPENAI_COMPATIBLE", "MOCK"]).default("OLLAMA"),
   providerBaseUrl: z.string().url().optional().or(z.literal("")).default("http://ollama:11434"),
   providerApiKey: z.string().optional().or(z.literal("")).default(""),
-  providerChatModel: z.string().optional().or(z.literal("")).default("llama3.1"),
-  providerEmbeddingModel: z.string().optional().or(z.literal("")).default("nomic-embed-text")
+  providerChatModel: z.string().optional().or(z.literal("")).default(""),
+  providerEmbeddingModel: z.string().optional().or(z.literal("")).default("")
 });
 
 export const loginSchema = z.object({

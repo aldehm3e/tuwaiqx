@@ -16,8 +16,8 @@ export class OllamaProvider implements AiProvider {
   constructor(config: ModelProviderConfig) {
     this.name = config.name || "Ollama";
     this.baseUrl = (config.baseUrl || "http://localhost:11434").replace(/\/$/, "");
-    this.chatModel = config.chatModel || "llama3.1";
-    this.embeddingModel = config.embeddingModel || "nomic-embed-text";
+    this.chatModel = config.chatModel?.trim() || "";
+    this.embeddingModel = config.embeddingModel?.trim() || "";
   }
 
   private timeoutMs(operation: "chat" | "embedding") {
@@ -115,6 +115,10 @@ export class OllamaProvider implements AiProvider {
 
   async complete(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     const endpoint = `${this.baseUrl}/api/chat`;
+    if (!this.chatModel) {
+      throw new Error("Ollama chat model is not configured. Set a chat model in the provider settings or OLLAMA_CHAT_MODEL.");
+    }
+
     const numPredict = Math.max(request.maxTokens ?? 800, this.chatMinPredict());
     const data = (await this.fetchJson("chat", endpoint, this.chatModel, {
       model: this.chatModel,
@@ -145,6 +149,10 @@ export class OllamaProvider implements AiProvider {
 
   async embed(request: EmbeddingRequest): Promise<EmbeddingResponse> {
     const endpoint = `${this.baseUrl}/api/embeddings`;
+    if (!this.embeddingModel) {
+      throw new Error("Ollama embedding model is not configured. Set an embedding model in the provider settings or OLLAMA_EMBEDDING_MODEL.");
+    }
+
     const data = (await this.fetchJson("embedding", endpoint, this.embeddingModel, {
       model: this.embeddingModel,
       prompt: request.input

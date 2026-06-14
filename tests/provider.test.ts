@@ -42,12 +42,12 @@ describe("OllamaProvider", () => {
       name: "Ollama Local",
       type: "OLLAMA",
       baseUrl: "http://ollama:11434",
-      chatModel: "qwen3:30b",
-      embeddingModel: "bge-m3"
+      chatModel: "large-chat:latest",
+      embeddingModel: "embedding-model"
     });
 
     await expect(provider.complete({ messages: [{ role: "user", content: "hello" }] })).rejects.toThrow(
-      /Ollama chat model "qwen3:30b".*HTTP 500.*signal: killed.*memory/i
+      /Ollama chat model "large-chat:latest".*HTTP 500.*signal: killed.*memory/i
     );
   });
 
@@ -66,7 +66,7 @@ describe("OllamaProvider", () => {
       name: "Ollama Local",
       type: "OLLAMA",
       baseUrl: "http://ollama:11434",
-      chatModel: "qwen3:30b",
+      chatModel: "chat-model",
       embeddingModel: "missing-embed"
     });
 
@@ -96,12 +96,12 @@ describe("OllamaProvider", () => {
       name: "Ollama Local",
       type: "OLLAMA",
       baseUrl: "http://ollama:11434",
-      chatModel: "qwen3:30b",
-      embeddingModel: "bge-m3"
+      chatModel: "thinking-chat-model",
+      embeddingModel: "embedding-model"
     });
 
     await expect(provider.complete({ messages: [{ role: "user", content: "hello" }], maxTokens: 64 })).rejects.toThrow(
-      /qwen3:30b.*thinking tokens.*no final answer.*num_predict \(1024\).*OLLAMA_CHAT_MIN_PREDICT/i
+      /thinking-chat-model.*thinking tokens.*no final answer.*num_predict \(1024\).*OLLAMA_CHAT_MIN_PREDICT/i
     );
   });
 });

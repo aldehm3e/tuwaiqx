@@ -78,8 +78,8 @@ export function SettingsForm({
 export function ProviderForm({
   defaultName = "Ollama Local",
   defaultBaseUrl = "http://ollama:11434",
-  defaultChatModel = "llama3.1",
-  defaultEmbeddingModel = "nomic-embed-text"
+  defaultChatModel = "",
+  defaultEmbeddingModel = ""
 }: {
   defaultName?: string;
   defaultBaseUrl?: string;
@@ -105,11 +105,11 @@ export function ProviderForm({
         <Field label="API key" hint="Leave empty for local runtimes unless the runtime requires a key.">
           <input className={inputClass} name="apiKey" type="password" autoComplete="off" />
         </Field>
-        <Field label="Chat model" hint="Use the exact chat model name returned by the runtime's /v1/models endpoint.">
-          <input className={inputClass} name="chatModel" defaultValue={defaultChatModel} />
+        <Field label="Chat model" hint="Use the exact chat model name reported by the selected runtime.">
+          <input className={inputClass} name="chatModel" defaultValue={defaultChatModel} placeholder="runtime chat model name" />
         </Field>
-        <Field label="Embedding model" hint="Use the exact embedding model name returned by the runtime's /v1/models endpoint. Re-index knowledge after changing it.">
-          <input className={inputClass} name="embeddingModel" defaultValue={defaultEmbeddingModel} />
+        <Field label="Embedding model" hint="Use the exact embedding model name reported by the selected runtime. Re-index knowledge after changing it.">
+          <input className={inputClass} name="embeddingModel" defaultValue={defaultEmbeddingModel} placeholder="runtime embedding model name" />
         </Field>
       </div>
       <div className="flex gap-4 text-sm">
@@ -131,7 +131,7 @@ export function LocalModelUploadForm() {
     <SmartForm action="/api/admin/model-files" encType="multipart" submitLabel="Upload model" className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Model name">
-          <input className={inputClass} name="name" required placeholder="Qwen 2.5 0.5B GGUF" />
+          <input className={inputClass} name="name" required placeholder="Local chat or embedding model" />
         </Field>
         <Field label="Model role">
           <select className={inputClass} name="kind" defaultValue="chat">

@@ -25,10 +25,8 @@ function setupProviderDefaults(input: ReturnType<typeof setupSchema.parse>) {
 
   return {
     baseUrl: input.providerBaseUrl,
-    chatModel: input.providerChatModel || (input.providerType === "OLLAMA" ? "llama3.1" : "gpt-4o-mini"),
-    embeddingModel:
-      input.providerEmbeddingModel ||
-      (input.providerType === "OLLAMA" ? "nomic-embed-text" : "text-embedding-3-small")
+    chatModel: input.providerChatModel,
+    embeddingModel: input.providerEmbeddingModel
   };
 }
 
@@ -42,6 +40,12 @@ export async function POST(request: Request) {
     const input = setupSchema.parse(await request.json());
     const env = getEnv();
     const providerDefaults = setupProviderDefaults(input);
+    if (input.providerType !== "MOCK" && !providerDefaults.chatModel) {
+      throw new Error("A chat model name is required for the default provider.");
+    }
+    if (input.providerType !== "MOCK" && !providerDefaults.embeddingModel) {
+      throw new Error("An embedding model name is required for the default provider.");
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.role.createMany({

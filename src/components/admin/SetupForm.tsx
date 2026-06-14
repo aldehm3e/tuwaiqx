@@ -54,11 +54,11 @@ export function SetupForm() {
         <Field label="API key" hint="Leave empty for local runtimes unless the runtime requires a key.">
           <input className={inputClass} name="providerApiKey" type="password" autoComplete="off" />
         </Field>
-        <Field label="Chat model" hint="Use the exact chat model name returned by the runtime's /v1/models endpoint.">
-          <input className={inputClass} name="providerChatModel" defaultValue="llama3.1" />
+        <Field label="Chat model" hint="Required for non-mock providers. Use the exact chat model name reported by the selected runtime.">
+          <input className={inputClass} name="providerChatModel" placeholder="runtime chat model name" />
         </Field>
-        <Field label="Embedding model" hint="Use the exact embedding model name returned by the runtime's /v1/models endpoint. Re-index knowledge after changing it.">
-          <input className={inputClass} name="providerEmbeddingModel" defaultValue="nomic-embed-text" />
+        <Field label="Embedding model" hint="Required for non-mock providers. Use the exact embedding model name reported by the selected runtime. Re-index knowledge after changing it.">
+          <input className={inputClass} name="providerEmbeddingModel" placeholder="runtime embedding model name" />
         </Field>
       </div>
     </SmartForm>
