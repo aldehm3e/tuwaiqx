@@ -8,24 +8,64 @@ import { chunkText } from "@/src/lib/rag/chunk";
 import { isPgVectorAvailable, vectorLiteral } from "@/src/lib/rag/vector";
 
 export async function indexDocument(documentId: string, buffer?: Buffer) {
-  const job = await prisma.systemJob.create({
-    data: {
-      type: "index_document",
-      status: "running",
-      entityId: documentId,
-      progress: 5,
-      startedAt: new Date()
-    }
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: { bot: { include: { embeddingProvider: true, modelProvider: true } } }
+  });
+  if (!document) {
+    throw new Error("Document not found.");
+  }
+
+  const claimed = await prisma.document.updateMany({
+    where: {
+      id: documentId,
+      status: { notIn: ["parsing", "indexing"] }
+    },
+    data: { status: "parsing", errorMessage: null }
   });
 
-  try {
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
-      include: { bot: { include: { embeddingProvider: true, modelProvider: true } } }
+  if (claimed.count === 0) {
+    const message = "Document indexing is already running for this document.";
+    await prisma.systemJob.create({
+      data: {
+        type: "index_document",
+        status: "failed",
+        entityId: documentId,
+        progress: 0,
+        errorMessage: message,
+        startedAt: new Date(),
+        finishedAt: new Date()
+      }
     });
-    if (!document) {
-      throw new Error("Document not found.");
-    }
+    throw new Error(message);
+  }
+
+  let jobId: string | undefined;
+
+  try {
+    await prisma.systemJob.updateMany({
+      where: {
+        type: "index_document",
+        entityId: documentId,
+        status: "running"
+      },
+      data: {
+        status: "failed",
+        errorMessage: "Superseded by a newer indexing attempt.",
+        finishedAt: new Date()
+      }
+    });
+
+    const job = await prisma.systemJob.create({
+      data: {
+        type: "index_document",
+        status: "running",
+        entityId: documentId,
+        progress: 5,
+        startedAt: new Date()
+      }
+    });
+    jobId = job.id;
 
     await prisma.document.update({
       where: { id: documentId },
@@ -126,10 +166,12 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       where: { id: documentId },
       data: { status: "failed", errorMessage: message }
     });
-    await prisma.systemJob.update({
-      where: { id: job.id },
-      data: { status: "failed", errorMessage: message, finishedAt: new Date() }
-    });
+    if (jobId) {
+      await prisma.systemJob.update({
+        where: { id: jobId },
+        data: { status: "failed", errorMessage: message, finishedAt: new Date() }
+      }).catch(() => undefined);
+    }
     throw error;
   }
 }

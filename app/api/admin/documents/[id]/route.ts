@@ -16,7 +16,21 @@ export async function DELETE(_request: Request, { params }: { params: Promise<un
       select: { id: true, storageKey: true, title: true }
     });
 
-    await prisma.document.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.systemJob.updateMany({
+        where: {
+          type: "index_document",
+          entityId: id,
+          status: "running"
+        },
+        data: {
+          status: "failed",
+          errorMessage: "Document was deleted before indexing completed.",
+          finishedAt: new Date()
+        }
+      }),
+      prisma.document.delete({ where: { id } })
+    ]);
     await removeStoredObject(document.storageKey);
     await auditLog({
       userId: guard.admin!.id,

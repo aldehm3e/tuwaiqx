@@ -114,6 +114,13 @@ OLLAMA_CHAT_MODEL=llama3.1
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 ```
 
+Recommended Ollama combinations:
+
+- Stable: `OLLAMA_CHAT_MODEL=qwen3:30b` with `OLLAMA_EMBEDDING_MODEL=nomic-embed-text`.
+- Multilingual advanced: `OLLAMA_CHAT_MODEL=qwen3:30b` with `OLLAMA_EMBEDDING_MODEL=bge-m3`.
+
+`nomic-embed-text` returns 768-dimensional embeddings. `bge-m3` returns 1024-dimensional embeddings. TuwaiqX supports mixed historical dimensions by only comparing vectors with the same dimension, but you should re-index knowledge after changing embedding models so semantic retrieval uses the new model. For `qwen3:30b` plus an embedding model in Docker, give Docker Desktop enough memory and keep `OLLAMA_MAX_LOADED_MODELS=2` so Ollama can keep both models warm. If Ollama returns `llama-server process has terminated: signal: killed` for `qwen3:30b`, Docker/Ollama likely does not have enough memory for that chat model; increase Docker Desktop memory, enable GPU support, or use a smaller chat model. If qwen returns thinking but no final answer, increase `OLLAMA_CHAT_MIN_PREDICT`.
+
 Optional OpenAI-compatible endpoints are configured in the admin dashboard or `.env`. TuwaiqX does not hardcode one paid vendor.
 
 Downloaded model files can be uploaded in `/admin/models`. TuwaiqX stores them under `MODEL_STORAGE_PATH` so a local runtime can load them from disk. For `.gguf` uploads, TuwaiqX also generates LocalAI config files and shows the runtime model names in the admin UI. Start the optional LocalAI profile or use another runtime, then add its OpenAI-compatible URL as a provider in `/admin/models`.

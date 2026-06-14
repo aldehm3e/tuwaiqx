@@ -119,7 +119,12 @@ export async function answerQuestion(input: {
     let embedding: number[] | undefined;
     try {
       embedding = (await embeddingProvider.embed({ input: input.message })).embedding;
-    } catch {
+    } catch (error) {
+      console.warn("Embedding generation failed; chat will use full-text retrieval fallback.", {
+        botId: bot.id,
+        provider: embeddingProvider.name,
+        error: error instanceof Error ? error.message : "Unknown embedding error"
+      });
       embedding = undefined;
     }
 

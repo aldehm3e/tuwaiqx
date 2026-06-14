@@ -15,6 +15,7 @@ export async function searchKnowledge(input: {
   if (input.embedding?.length && (await isPgVectorAvailable())) {
     try {
       const vector = vectorLiteral(input.embedding);
+      const embeddingDimension = input.embedding.length;
       const results = await prisma.$queryRawUnsafe<RagContextChunk[]>(
         `
         SELECT
@@ -30,6 +31,7 @@ export async function searchKnowledge(input: {
         WHERE d."approved" = true
           AND d."status" = 'indexed'
           AND c."embedding" IS NOT NULL
+          AND vector_dims(c."embedding") = $4
           AND (c."botId" IS NULL OR c."botId" = $2)
           AND (d."botId" IS NULL OR d."botId" = $2)
         ORDER BY c."embedding" <=> $1::vector
@@ -37,14 +39,20 @@ export async function searchKnowledge(input: {
         `,
         vector,
         input.botId,
-        topK
+        topK,
+        embeddingDimension
       );
 
       const filtered = results.filter((result) => result.score >= threshold);
       if (filtered.length > 0) {
         return filtered;
       }
-    } catch {
+    } catch (error) {
+      console.warn("Vector search failed; falling back to full-text search.", {
+        botId: input.botId,
+        embeddingDimension: input.embedding.length,
+        error: error instanceof Error ? error.message : "Unknown vector search error"
+      });
       // Full-text fallback below keeps chat usable if pgvector is unavailable or dimensions differ.
     }
   }
