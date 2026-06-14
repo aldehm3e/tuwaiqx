@@ -1,6 +1,7 @@
 import type { DocumentStatus } from "@prisma/client";
 import Link from "next/link";
 import { DeleteAction } from "@/src/components/admin/DeleteAction";
+import { KnowledgeAutoRefresh } from "@/src/components/admin/KnowledgeAutoRefresh";
 import { ReindexAction } from "@/src/components/admin/ReindexAction";
 import { Badge, EmptyState, PageHeader, Panel, buttonClass, secondaryButtonClass } from "@/src/components/admin/Ui";
 import { prisma } from "@/src/lib/db/prisma";
@@ -46,6 +47,7 @@ export default async function KnowledgePage() {
 
   return (
     <div className="space-y-6">
+      <KnowledgeAutoRefresh enabled={inProgress > 0} />
       <PageHeader
         title="Knowledge base"
         description="Upload files, add manual entries, crawl public pages, approve content, inspect chunks, and keep source citations attached."
