@@ -1,18 +1,54 @@
 import { prisma } from "@/src/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { providerFromDb } from "@/src/lib/ai/factory";
+import { getEnv } from "@/src/lib/config/env";
 import { parseDocument } from "@/src/lib/documents/parse";
-import { readStoredObject } from "@/src/lib/documents/storage";
+import { readStoredObject, storeUpload } from "@/src/lib/documents/storage";
 import { readableTextForIndexing } from "@/src/lib/documents/text";
 import { chunkText } from "@/src/lib/rag/chunk";
 import { isPgVectorAvailable, vectorLiteral } from "@/src/lib/rag/vector";
 
-export async function indexDocument(documentId: string, buffer?: Buffer) {
+type IndexDocumentOptions = {
+  systemJobId?: string;
+};
+
+async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<void>
+) {
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(Math.max(concurrency, 1), items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      await worker(items[currentIndex], currentIndex);
+    }
+  });
+  await Promise.all(workers);
+}
+
+function textFilename(title: string) {
+  const safeTitle = title.trim() || "knowledge";
+  return `${safeTitle.slice(0, 60)}.txt`;
+}
+
+export async function indexDocument(documentId: string, buffer?: Buffer, options: IndexDocumentOptions = {}) {
   const document = await prisma.document.findUnique({
     where: { id: documentId },
     include: { bot: { include: { embeddingProvider: true, modelProvider: true } } }
   });
   if (!document) {
+    if (options.systemJobId) {
+      await prisma.systemJob.update({
+        where: { id: options.systemJobId },
+        data: {
+          status: "failed",
+          errorMessage: "Document not found.",
+          finishedAt: new Date()
+        }
+      }).catch(() => undefined);
+    }
     throw new Error("Document not found.");
   }
 
@@ -26,17 +62,24 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
 
   if (claimed.count === 0) {
     const message = "Document indexing is already running for this document.";
-    await prisma.systemJob.create({
-      data: {
-        type: "index_document",
-        status: "failed",
-        entityId: documentId,
-        progress: 0,
-        errorMessage: message,
-        startedAt: new Date(),
-        finishedAt: new Date()
-      }
-    });
+    if (options.systemJobId) {
+      await prisma.systemJob.update({
+        where: { id: options.systemJobId },
+        data: { status: "failed", errorMessage: message, finishedAt: new Date() }
+      }).catch(() => undefined);
+    } else {
+      await prisma.systemJob.create({
+        data: {
+          type: "index_document",
+          status: "failed",
+          entityId: documentId,
+          progress: 0,
+          errorMessage: message,
+          startedAt: new Date(),
+          finishedAt: new Date()
+        }
+      });
+    }
     throw new Error(message);
   }
 
@@ -47,7 +90,8 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       where: {
         type: "index_document",
         entityId: documentId,
-        status: "running"
+        status: "running",
+        ...(options.systemJobId ? { id: { not: options.systemJobId } } : {})
       },
       data: {
         status: "failed",
@@ -56,15 +100,26 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       }
     });
 
-    const job = await prisma.systemJob.create({
-      data: {
-        type: "index_document",
-        status: "running",
-        entityId: documentId,
-        progress: 5,
-        startedAt: new Date()
-      }
-    });
+    const job = options.systemJobId
+      ? await prisma.systemJob.update({
+          where: { id: options.systemJobId },
+          data: {
+            status: "running",
+            progress: 5,
+            errorMessage: null,
+            startedAt: new Date(),
+            finishedAt: null
+          }
+        })
+      : await prisma.systemJob.create({
+          data: {
+            type: "index_document",
+            status: "running",
+            entityId: documentId,
+            progress: 5,
+            startedAt: new Date()
+          }
+        });
     jobId = job.id;
 
     await prisma.document.update({
@@ -114,7 +169,9 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
       : null;
     const provider = providerFromDb(document.bot?.embeddingProvider || defaultEmbeddingProvider || document.bot?.modelProvider);
     const canStoreEmbeddings = await isPgVectorAvailable();
+    const embeddingConcurrency = getEnv().EMBEDDING_CONCURRENCY;
     const progressInterval = Math.max(1, Math.ceil(chunks.length / 10));
+    const savedChunks: Array<{ id: string; content: string; chunkIndex: number }> = [];
 
     for (const [index, chunk] of chunks.entries()) {
       const savedChunk = await prisma.documentChunk.create({
@@ -128,28 +185,48 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
           metadataJson: (parsed?.metadata || {}) as Prisma.InputJsonObject
         }
       });
+      savedChunks.push({ id: savedChunk.id, content: chunk.content, chunkIndex: index });
 
-      if (canStoreEmbeddings) {
+      if ((index + 1) % progressInterval === 0 || index === chunks.length - 1) {
+        await prisma.systemJob.update({
+          where: { id: job.id },
+          data: { progress: Math.min(55, 35 + Math.round(((index + 1) / chunks.length) * 20)) }
+        });
+      }
+    }
+
+    if (canStoreEmbeddings) {
+      let embeddedChunks = 0;
+      await runWithConcurrency(savedChunks, embeddingConcurrency, async (savedChunk) => {
         try {
-          const embedding = (await provider.embed({ input: chunk.content })).embedding;
+          const embedding = (await provider.embed({ input: savedChunk.content })).embedding;
           await prisma.$executeRawUnsafe(
             `UPDATE "DocumentChunk" SET "embedding" = $1::vector WHERE "id" = $2`,
             vectorLiteral(embedding),
             savedChunk.id
           );
         } catch (error) {
-          if (process.env.NODE_ENV !== "production") {
-            console.warn("Embedding failed; full-text fallback remains available.", error);
-          }
+          console.warn("Embedding failed; full-text fallback remains available.", {
+            documentId,
+            chunkIndex: savedChunk.chunkIndex,
+            provider: provider.name,
+            error: error instanceof Error ? error.message : "Unknown embedding error"
+          });
         }
-      }
 
-      if ((index + 1) % progressInterval === 0 || index === chunks.length - 1) {
-        await prisma.systemJob.update({
-          where: { id: job.id },
-          data: { progress: Math.min(95, 35 + Math.round(((index + 1) / chunks.length) * 60)) }
-        });
-      }
+        embeddedChunks += 1;
+        if (embeddedChunks % progressInterval === 0 || embeddedChunks === savedChunks.length) {
+          await prisma.systemJob.update({
+            where: { id: job.id },
+            data: { progress: Math.min(95, 55 + Math.round((embeddedChunks / savedChunks.length) * 40)) }
+          });
+        }
+      });
+    } else {
+      await prisma.systemJob.update({
+        where: { id: job.id },
+        data: { progress: 95 }
+      });
     }
 
     await prisma.document.update({
@@ -176,7 +253,7 @@ export async function indexDocument(documentId: string, buffer?: Buffer) {
   }
 }
 
-export async function indexTextDocument(input: {
+export async function createTextDocument(input: {
   botId?: string | null;
   title: string;
   content: string;
@@ -185,13 +262,22 @@ export async function indexTextDocument(input: {
   approved?: boolean;
   createdById?: string;
 }) {
+  const buffer = Buffer.from(input.content, "utf8");
+  const filename = textFilename(input.title);
+  const storageKey = await storeUpload({
+    filename,
+    mimeType: "text/plain",
+    buffer
+  });
+
   const document = await prisma.document.create({
     data: {
       botId: input.botId || null,
       title: input.title,
-      filename: `${input.title.slice(0, 60)}.txt`,
+      filename,
       mimeType: "text/plain",
-      sizeBytes: Buffer.byteLength(input.content),
+      sizeBytes: buffer.length,
+      storageKey,
       sourceType: input.sourceType,
       sourceUrl: input.sourceUrl || null,
       status: "uploaded",
@@ -200,6 +286,11 @@ export async function indexTextDocument(input: {
     }
   });
 
+  return document;
+}
+
+export async function indexTextDocument(input: Parameters<typeof createTextDocument>[0]) {
+  const document = await createTextDocument(input);
   await indexDocument(document.id, Buffer.from(input.content, "utf8"));
   return document;
 }

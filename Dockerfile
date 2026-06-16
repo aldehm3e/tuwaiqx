@@ -23,6 +23,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 RUN chmod +x /app/scripts/docker-entrypoint.sh /app/scripts/*.sh || true
 EXPOSE 3000
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]

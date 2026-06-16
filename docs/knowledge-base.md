@@ -24,7 +24,9 @@ Document states:
 
 Admins can assign knowledge to one bot or all bots, approve content, inspect errors, preview chunks, and re-index documents.
 
-Use the Knowledge page actions to re-index one document or all documents. Re-indexing is required after changing the embedding provider or embedding model.
+Use the Knowledge page actions to re-index one document or all documents. Re-indexing is required after changing the embedding provider or embedding model. Indexing runs through the BullMQ worker, so Docker installs need the `tuwaiqx-worker` service running and manual installs need `npm run worker`.
+
+TuwaiqX tries vector retrieval first when embeddings and pgvector are available. If vector search is unavailable or has no good result, it falls back to PostgreSQL full-text search and then to a simple contains search as a final safety fallback.
 
 ## PDF Text Quality
 

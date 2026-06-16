@@ -527,20 +527,45 @@ WantedBy=multi-user.target
 EOF
 ```
 
+Create the background indexing worker service:
+
+```bash
+sudo tee /etc/systemd/system/tuwaiqx-worker.service >/dev/null <<'EOF'
+[Unit]
+Description=TuwaiqX background indexing worker
+After=network.target postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=tuwaiqx
+Group=tuwaiqx
+WorkingDirectory=/opt/tuwaiqx
+EnvironmentFile=/opt/tuwaiqx/.env
+ExecStart=/usr/bin/npm run worker
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
 If `which npm` returned a different path, replace `/usr/bin/npm` in the service file.
 
 Start TuwaiqX:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now tuwaiqx
+sudo systemctl enable --now tuwaiqx tuwaiqx-worker
 sudo systemctl status tuwaiqx
+sudo systemctl status tuwaiqx-worker
 ```
 
 Read logs:
 
 ```bash
 sudo journalctl -u tuwaiqx -f
+sudo journalctl -u tuwaiqx-worker -f
 ```
 
 ### 9. Add A Reverse Proxy
@@ -652,6 +677,8 @@ npm run seed
 npm run dev
 ```
 
+`npm run seed` is for local development and demos only. Production customers should start with an empty database, open `/admin/setup`, and create their own owner account, organization settings, provider, and bot.
+
 ## Production Checklist
 
 - Set `AUTH_SECRET`.
@@ -659,6 +686,7 @@ npm run dev
 - Configure backups.
 - Configure allowed widget domains.
 - Pull local models before relying on Ollama.
+- Do not run `npm run seed` for production customer setup.
 - If not using Ollama, configure an OpenAI-compatible/runtime provider before production testing.
 - Mount a persistent `MODEL_STORAGE_PATH` if using uploaded local model files.
 - Do not expose database, Redis, Ollama, or LocalAI ports publicly.

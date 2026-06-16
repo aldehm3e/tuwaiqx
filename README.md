@@ -4,7 +4,7 @@ TuwaiqX is a GNU AGPL self-hosted AI chatbot system for organizations. It lets N
 
 TuwaiqX is not a SaaS product, not a hosted subscription platform, and not a small MVP demo. It is a complete open-source package that an organization can clone from GitHub, install on its own server, connect to a local model such as Ollama or to an optional API-key model provider, upload its documents, configure its bot, and embed the bot into its own website.
 
-Auther: Eng. Abdulrahman Alsaedi
+Author: Eng. Abdulrahman Alsaedi
 
 ## Features
 
@@ -36,6 +36,8 @@ cd tuwaiqx
 cp .env.example .env
 docker compose up -d
 ```
+
+Docker Compose starts the web app and the BullMQ indexing worker. Redis is used for indexing jobs and distributed rate limiting.
 
 Open the admin dashboard on your server:
 
@@ -101,7 +103,13 @@ npm run seed
 npm run dev
 ```
 
-Seed data creates the demo organization `Peaceful Aid NGO`, the Main Website Assistant, Volunteer Assistant, Donation Assistant, Support Assistant, English and Arabic knowledge samples, and a volunteer form. It is optional and not required for production.
+For non-Docker development or manual installs, run the indexing worker in a second terminal:
+
+```bash
+npm run worker
+```
+
+Seed data creates the demo organization `Peaceful Aid NGO`, the Main Website Assistant, Volunteer Assistant, Donation Assistant, Support Assistant, English and Arabic knowledge samples, and a volunteer form. It is optional and not required for production. Production customers should complete `/admin/setup` on a fresh database instead of running `npm run seed`.
 
 ## Model Providers
 
@@ -116,6 +124,8 @@ OLLAMA_EMBEDDING_MODEL=<embedding-model>
 
 Use any compatible chat and embedding models supported by your runtime. Embedding dimensions can differ between models; TuwaiqX only compares vectors with the same dimension, but you should re-index knowledge after changing embedding models so semantic retrieval uses the new model. Large local chat models may require more Docker/Ollama memory, GPU support, longer timeouts, or a smaller model. If a thinking model returns no final answer, increase `OLLAMA_CHAT_MIN_PREDICT`.
 
+`EMBEDDING_CONCURRENCY` defaults to `1`, which is safest for local Ollama and LocalAI. Increase it carefully, for example to `2` or `4`, only when your embedding provider can handle parallel requests.
+
 Optional OpenAI-compatible endpoints are configured in the admin dashboard or `.env`. TuwaiqX does not hardcode one paid vendor.
 
 Downloaded model files can be uploaded in `/admin/models`. TuwaiqX stores them under `MODEL_STORAGE_PATH` so a local runtime can load them from disk. For `.gguf` uploads, TuwaiqX also generates LocalAI config files and shows the runtime model names in the admin UI. Start the optional LocalAI profile or use another runtime, then add its OpenAI-compatible URL as a provider in `/admin/models`.
@@ -123,6 +133,8 @@ Downloaded model files can be uploaded in `/admin/models`. TuwaiqX stores them u
 ## Uploading Documents
 
 Go to `/admin/knowledge/upload` and upload supported files. TuwaiqX stores the original file, parses text, chunks content, generates embeddings when a provider is available, stores chunks in pgvector, and keeps full-text fallback search available.
+
+Uploads, manual entries, crawler pages, and re-index actions enqueue indexing jobs. The worker processes them in the background while the Knowledge page shows queued, parsing, indexing, indexed, or failed status.
 
 Arabic and RTL PDFs receive conservative text-direction cleanup during parsing. For scanned PDFs or PDFs with unusual embedded fonts, inspect chunks after upload and use OCR or a cleaner text version when needed.
 
@@ -142,6 +154,8 @@ Go to `/admin/embed` and copy:
 Add the host website domain in `/admin/settings` before production use.
 
 The embed page also provides a fully customizable example for frontend teams. It exposes supported `data-*` attributes and Shadow DOM `::part(...)` selectors for changing the launcher, panel, colors, quick actions, input, buttons, sizing, and mobile styling without changing TuwaiqX settings.
+
+For local widget checks, use `/admin/test` after signing in, or embed the script on a temporary page outside the repository and add that page's host to the allowed domains in `/admin/settings`.
 
 ## Admin Dashboard
 

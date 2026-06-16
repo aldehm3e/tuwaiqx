@@ -1,9 +1,9 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { storeUpload } from "@/src/lib/documents/storage";
-import { indexDocument } from "@/src/lib/documents/indexer";
 import { prisma } from "@/src/lib/db/prisma";
 import { auditLog } from "@/src/lib/services/audit";
+import { enqueueDocumentIndex } from "@/src/lib/jobs/queue";
 import { splitLines } from "@/src/lib/utils/forms";
 
 const allowedExtensions = new Set(["pdf", "doc", "docx", "txt", "md", "markdown", "html", "htm", "csv", "xlsx", "json"]);
@@ -11,18 +11,6 @@ const maxBytes = 25 * 1024 * 1024;
 
 function extension(filename: string) {
   return filename.split(".").pop()?.toLowerCase() || "";
-}
-
-function scheduleUploadedDocumentIndexing(documentIds: string[]) {
-  after(async () => {
-    for (const documentId of documentIds) {
-      try {
-        await indexDocument(documentId);
-      } catch (error) {
-        console.error(`Failed to index uploaded document ${documentId}`, error);
-      }
-    }
-  });
 }
 
 export async function POST(request: Request) {
@@ -62,6 +50,7 @@ export async function POST(request: Request) {
       }
     });
     created.push(document.id);
+    await enqueueDocumentIndex(document.id);
     await auditLog({
       userId: guard.admin!.id,
       action: "document_uploaded",
@@ -70,7 +59,5 @@ export async function POST(request: Request) {
     });
   }
 
-  scheduleUploadedDocumentIndexing(created);
-
-  return NextResponse.json({ message: `${created.length} document(s) uploaded. Indexing is running in the background.`, ids: created });
+  return NextResponse.json({ message: `${created.length} document(s) uploaded. Indexing has been queued.`, ids: created });
 }

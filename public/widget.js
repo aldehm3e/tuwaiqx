@@ -452,6 +452,11 @@
       });
     })
     .then(function (config) {
+      if (config.botId) {
+        botId = config.botId;
+        storageKey = "tuwaiqx:" + baseUrl + ":" + botId;
+        host.setAttribute("data-tuwaiqx-widget", botId);
+      }
       state.config = config;
       render();
     })

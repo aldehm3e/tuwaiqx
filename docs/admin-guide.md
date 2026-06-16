@@ -31,11 +31,32 @@ TuwaiqX does not execute uploaded model weights inside the web app. Uploading a 
 
 Chat and embedding providers can be separate. If you change the embedding provider or embedding model, re-index knowledge before relying on retrieval quality.
 
+Recommended provider workflow:
+
+1. Start the runtime, such as Ollama, LocalAI, LM Studio, llama.cpp, vLLM, or SGLang.
+2. Add or edit a provider in `/admin/models`.
+3. Use `Detect models` to read available model names from the runtime.
+4. Copy or apply the detected names as the chat model and embedding model.
+5. Save the provider.
+6. Use `Test chat` and `Test embedding`.
+7. Set the provider as the default chat provider and/or default embedding provider.
+8. Re-index knowledge if the embedding model changed.
+
+Disabled providers stay saved but should not be used as defaults. TuwaiqX prevents disabling a provider while it is still the default chat or embedding provider; set another enabled provider as default first.
+
+API keys are not shown after saving. To rotate a key, edit the provider and enter a new API key. Leave the key field blank to keep the existing encrypted key.
+
 ## Bots
 
 Create bots at `/admin/bots/new`. Configure strict mode, source display, prompt, provider, language, direction, widget color, quick actions, and embed position.
 
 Use `/admin/embed` after creating a bot. Each bot shows a default script for a simple install and a fully customizable embed example for frontend teams that need to control the launcher, panel, colors, quick actions, input, buttons, mobile sizing, and exposed Shadow DOM parts.
+
+For local widget checks, use `/admin/test` after signing in. Frontend teams can also embed the script on any temporary local page outside the repository, add that page's host to allowed domains in `/admin/settings`, and use a widget script such as:
+
+```html
+<script src="http://localhost:3000/widget.js" data-bot-id="main"></script>
+```
 
 ## Conversations and Gaps
 

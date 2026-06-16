@@ -2,7 +2,7 @@
 
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { secondaryButtonClass } from "@/src/components/admin/Ui";
 
 export function ReindexAction({
@@ -16,14 +16,16 @@ export function ReindexAction({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const working = loading || isPending;
 
   return (
     <div className="inline-flex items-center gap-2">
       <button
         className={`${secondaryButtonClass} gap-2`}
-        disabled={loading}
+        disabled={working}
         type="button"
         onClick={async () => {
           if (!window.confirm(confirmMessage)) {
@@ -43,11 +45,13 @@ export function ReindexAction({
           }
 
           setMessage(data.message || "Re-indexed.");
-          router.refresh();
+          startTransition(() => {
+            router.refresh();
+          });
         }}
       >
-        <RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-        {loading ? "Re-indexing..." : label}
+        <RefreshCw aria-hidden="true" className={`h-4 w-4 ${working ? "animate-spin" : ""}`} />
+        {loading ? "Re-indexing..." : isPending ? "Updating..." : label}
       </button>
       {message ? <span className="text-xs text-la-green">{message}</span> : null}
       {error ? <span className="text-xs text-red-600">{error}</span> : null}

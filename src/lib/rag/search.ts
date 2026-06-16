@@ -57,6 +57,57 @@ export async function searchKnowledge(input: {
     }
   }
 
+  if (input.query.trim()) {
+    try {
+      const fullTextResults = await prisma.$queryRawUnsafe<RagContextChunk[]>(
+        `
+        WITH q AS (
+          SELECT websearch_to_tsquery('simple', $1) AS query
+        )
+        SELECT
+          c."content",
+          c."chunkIndex",
+          d."title",
+          d."id" AS "documentId",
+          d."sourceUrl",
+          NULL::integer AS "pageNumber",
+          LEAST(
+            0.95,
+            0.45 + (
+              ts_rank_cd(to_tsvector('simple', coalesce(c."content", '')), q.query) +
+              (ts_rank_cd(to_tsvector('simple', coalesce(d."title", '')), q.query) * 0.5)
+            )
+          )::float AS "score"
+        FROM "DocumentChunk" c
+        JOIN "Document" d ON d."id" = c."documentId"
+        CROSS JOIN q
+        WHERE d."approved" = true
+          AND d."status" = 'indexed'
+          AND (c."botId" IS NULL OR c."botId" = $2)
+          AND (d."botId" IS NULL OR d."botId" = $2)
+          AND (
+            to_tsvector('simple', coalesce(c."content", '')) @@ q.query OR
+            to_tsvector('simple', coalesce(d."title", '')) @@ q.query
+          )
+        ORDER BY "score" DESC, c."chunkIndex" ASC
+        LIMIT $3
+        `,
+        input.query,
+        input.botId,
+        topK
+      );
+
+      if (fullTextResults.length > 0) {
+        return fullTextResults;
+      }
+    } catch (error) {
+      console.warn("Full-text search failed; falling back to contains search.", {
+        botId: input.botId,
+        error: error instanceof Error ? error.message : "Unknown full-text search error"
+      });
+    }
+  }
+
   const terms = input.query
     .split(/\s+/)
     .map((term) => term.trim().replace(/[^\p{L}\p{N}-]/gu, ""))

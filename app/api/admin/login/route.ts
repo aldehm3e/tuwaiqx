@@ -3,16 +3,17 @@ import { createSessionToken, sessionCookieOptions, SESSION_COOKIE } from "@/src/
 import { verifyPassword } from "@/src/lib/auth/password";
 import { prisma } from "@/src/lib/db/prisma";
 import { auditLog } from "@/src/lib/services/audit";
-import { getClientIp, rateLimit } from "@/src/lib/security/rate-limit";
+import { applyRateLimitHeaders, getClientIp, rateLimit } from "@/src/lib/security/rate-limit";
 import { errorResponse } from "@/src/lib/api/errors";
 import { loginSchema } from "@/src/lib/validation/schemas";
 
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const limited = rateLimit(`login:${ip}`, 10, 60_000);
+    const limited = await rateLimit(`login:${ip}`, 10, 60_000);
+    const headers = applyRateLimitHeaders(new Headers(), limited);
     if (!limited.allowed) {
-      return NextResponse.json({ error: "Too many login attempts." }, { status: 429 });
+      return NextResponse.json({ error: "Too many login attempts." }, { status: 429, headers });
     }
 
     const input = loginSchema.parse(await request.json());
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       ipAddress: ip
     });
 
-    const response = NextResponse.json({ message: "Logged in." });
+    const response = NextResponse.json({ message: "Logged in." }, { headers });
     response.cookies.set(
       SESSION_COOKIE,
       createSessionToken({
@@ -51,4 +52,3 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
-

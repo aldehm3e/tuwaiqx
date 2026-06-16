@@ -30,6 +30,10 @@
 - `PATCH /api/admin/users/:id`
 - `DELETE /api/admin/users/:id`
 - `POST /api/admin/providers`
+- `POST /api/admin/providers/detect`
+- `PUT /api/admin/providers/:id`
+- `PATCH /api/admin/providers/:id`
+- `DELETE /api/admin/providers/:id`
 - `POST /api/admin/model-files`
 - `DELETE /api/admin/model-files/:id`
 - `POST /api/admin/bots`
@@ -46,4 +50,12 @@
 
 All admin routes require local admin authentication and permission checks.
 
+Provider `PATCH` actions are JSON requests using an `action` field. Current actions include `health`, `testChat`, `testEmbedding`, `detectModels`, `enable`, `disable`, `setDefaultChat`, and `setDefaultEmbedding`.
+
 Page-level permission failures redirect to `/admin/not-authorized`. API permission failures return HTTP `403` with a role-specific error message.
+
+## Background Jobs
+
+Document upload, manual knowledge, crawler ingestion, and re-index API routes enqueue BullMQ jobs instead of running heavy indexing inside the web request. `src/lib/jobs/queue.ts` creates queued `SystemJob` records, and `npm run worker` processes jobs through `src/lib/jobs/worker.ts`.
+
+Docker Compose runs the worker as `tuwaiqx-worker`. Non-Docker development should run `npm run dev` and `npm run worker` in separate terminals.

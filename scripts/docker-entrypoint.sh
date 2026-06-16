@@ -11,4 +11,8 @@ echo "Running database migrations..."
 npx prisma migrate deploy
 
 echo "Starting TuwaiqX..."
-exec npm run start
+if [ "$#" -eq 0 ]; then
+  set -- npm run start
+fi
+
+exec "$@"

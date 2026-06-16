@@ -8,7 +8,7 @@ services:
       tuwaiqx-postgres:
         condition: service_healthy
       tuwaiqx-redis:
-        condition: service_started
+        condition: service_healthy
       tuwaiqx-minio:
         condition: service_started
     env_file:
@@ -22,8 +22,36 @@ services:
       MAX_MODEL_UPLOAD_MB: ${MAX_MODEL_UPLOAD_MB:-8000}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       LOCAL_RUNTIME_BASE_URL: ${LOCAL_RUNTIME_BASE_URL:-http://localai:8080/v1}
+      EMBEDDING_CONCURRENCY: ${EMBEDDING_CONCURRENCY:-1}
     ports:
       - "3000:3000"
+    volumes:
+      - uploads:/data/uploads
+      - models:/data/models
+    restart: unless-stopped
+
+  tuwaiqx-worker:
+    build: .
+    image: tuwaiqx-tuwaiqx-web
+    container_name: tuwaiqx-worker
+    command: npm run worker
+    depends_on:
+      tuwaiqx-postgres:
+        condition: service_healthy
+      tuwaiqx-redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://tuwaiqx:tuwaiqx@postgres:5432/tuwaiqx}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_PATH: ${STORAGE_PATH:-/data/uploads}
+      MODEL_STORAGE_PATH: ${MODEL_STORAGE_PATH:-/data/models}
+      MAX_MODEL_UPLOAD_MB: ${MAX_MODEL_UPLOAD_MB:-8000}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      LOCAL_RUNTIME_BASE_URL: ${LOCAL_RUNTIME_BASE_URL:-http://localai:8080/v1}
+      EMBEDDING_CONCURRENCY: ${EMBEDDING_CONCURRENCY:-1}
     volumes:
       - uploads:/data/uploads
       - models:/data/models
@@ -54,6 +82,11 @@ services:
     container_name: tuwaiqx-redis
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       default:
         aliases:

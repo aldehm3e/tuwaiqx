@@ -53,6 +53,13 @@ export const providerSchema = z.object({
   isEnabled: z.coerce.boolean().default(true)
 });
 
+export const providerDetectionSchema = z.object({
+  providerId: z.string().optional(),
+  type: z.enum(["OLLAMA", "OPENAI_COMPATIBLE", "MOCK"]).optional(),
+  baseUrl: z.string().url().optional().or(z.literal("")),
+  apiKey: z.string().optional().or(z.literal(""))
+});
+
 export const localModelUploadSchema = z.object({
   name: z.string().min(2).max(160),
   kind: z.enum(["chat", "embedding"]),

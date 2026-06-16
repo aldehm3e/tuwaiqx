@@ -21,7 +21,9 @@ export async function POST(request: Request) {
       chatModel: emptyToNull(input.chatModel),
       embeddingModel: emptyToNull(input.embeddingModel)
     });
+    const startedAt = Date.now();
     const health = await providerForHealth.healthCheck();
+    const latencyMs = Date.now() - startedAt;
 
     const provider = await prisma.$transaction(async (tx) => {
       if (input.isDefaultChat) {
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
           isDefaultChat: input.isDefaultChat,
           isDefaultEmbedding: input.isDefaultEmbedding,
           isEnabled: input.isEnabled,
+          configJson: { lastHealthLatencyMs: latencyMs },
           lastHealthStatus: health.ok ? "ok" : "failed",
           lastHealthAt: new Date()
         }

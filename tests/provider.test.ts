@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { detectProviderModels } from "../src/lib/ai/model-detection";
 import { OllamaProvider } from "../src/lib/ai/providers/ollama";
 import { MockProvider } from "../src/lib/ai/providers/mock";
 
@@ -103,5 +104,78 @@ describe("OllamaProvider", () => {
     await expect(provider.complete({ messages: [{ role: "user", content: "hello" }], maxTokens: 64 })).rejects.toThrow(
       /thinking-chat-model.*thinking tokens.*no final answer.*num_predict \(1024\).*OLLAMA_CHAT_MIN_PREDICT/i
     );
+  });
+});
+
+describe("detectProviderModels", () => {
+  it("detects Ollama model names from tags", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ models: [{ name: "llama3.2:latest" }, { model: "nomic-embed-text:latest" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+      )
+    );
+
+    const detected = await detectProviderModels({
+      name: "Ollama",
+      type: "OLLAMA",
+      baseUrl: "http://ollama:11434"
+    });
+
+    expect(detected.models).toEqual(["llama3.2:latest", "nomic-embed-text:latest"]);
+    expect(detected.chatModels).toEqual(detected.models);
+    expect(fetch).toHaveBeenCalledWith("http://ollama:11434/api/tags", expect.objectContaining({ method: "GET" }));
+  });
+
+  it("detects OpenAI-compatible model IDs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ data: [{ id: "local-chat" }, { id: "local-embedding" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+      )
+    );
+
+    const detected = await detectProviderModels({
+      name: "LocalAI",
+      type: "OPENAI_COMPATIBLE",
+      baseUrl: "http://localai:8080/v1",
+      apiKey: "test-key"
+    });
+
+    expect(detected.models).toEqual(["local-chat", "local-embedding"]);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localai:8080/v1/models",
+      expect.objectContaining({
+        headers: { authorization: "Bearer test-key" },
+        method: "GET"
+      })
+    );
+  });
+
+  it("reports authentication failures without exposing response bodies", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ error: "secret details" }), {
+          status: 401,
+          headers: { "content-type": "application/json" }
+        })
+      )
+    );
+
+    await expect(
+      detectProviderModels({
+        name: "LocalAI",
+        type: "OPENAI_COMPATIBLE",
+        baseUrl: "http://localai:8080/v1",
+        apiKey: "bad-key"
+      })
+    ).rejects.toThrow("Authentication failed. Check the provider API key.");
   });
 });

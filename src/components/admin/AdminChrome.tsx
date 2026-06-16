@@ -1,39 +1,7 @@
-import {
-  Activity,
-  BookOpen,
-  Bot,
-  ChartNoAxesCombined,
-  ClipboardList,
-  Database,
-  FileText,
-  KeyRound,
-  LifeBuoy,
-  MessageSquare,
-  Settings,
-  ShieldCheck,
-  Ticket,
-  Users
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { AdminNav } from "@/src/components/admin/AdminNav";
 import { prisma } from "@/src/lib/db/prisma";
-
-const nav = [
-  { href: "/admin", label: "Dashboard", icon: Activity },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/models", label: "Models", icon: KeyRound },
-  { href: "/admin/bots", label: "Bots", icon: Bot },
-  { href: "/admin/knowledge", label: "Knowledge", icon: BookOpen },
-  { href: "/admin/test", label: "Test", icon: MessageSquare },
-  { href: "/admin/embed", label: "Embed", icon: FileText },
-  { href: "/admin/conversations", label: "Conversations", icon: ClipboardList },
-  { href: "/admin/tickets", label: "Tickets", icon: Ticket },
-  { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombined },
-  { href: "/admin/system", label: "System", icon: Database },
-  { href: "/admin/audit-log", label: "Audit Log", icon: ShieldCheck },
-  { href: "/admin/backups", label: "Backups", icon: LifeBuoy }
-];
 
 export async function AdminChrome({
   children,
@@ -66,21 +34,7 @@ export async function AdminChrome({
             </span>
           </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {nav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-la-surface hover:text-ink"
-              >
-                <Icon aria-hidden="true" className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <AdminNav />
         <div className="border-t border-la-line p-4 text-xs leading-5 text-slate-500">
           <div>{settings?.organizationName || "Organization"}</div>
           <a className="font-medium text-la-green" href={sourceCodeUrl} rel="noreferrer" target="_blank">

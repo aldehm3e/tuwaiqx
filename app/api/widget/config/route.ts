@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { corsHeaders } from "@/src/lib/api/cors";
+import { resolveActiveBot } from "@/src/lib/bots/resolve";
 import { prisma } from "@/src/lib/db/prisma";
 
 export async function OPTIONS(request: Request) {
@@ -14,16 +15,7 @@ export async function GET(request: Request) {
   const headers = await corsHeaders(request);
   if (!headers) return NextResponse.json({ error: "Origin is not allowed." }, { status: 403 });
 
-  const [settings, bot] = await Promise.all([
-    prisma.appSettings.findFirst(),
-    prisma.bot.findFirst({
-      where: {
-        OR: [{ id: botId }, { slug: botId }],
-        isActive: true,
-        isArchived: false
-      }
-    })
-  ]);
+  const [settings, bot] = await Promise.all([prisma.appSettings.findFirst(), resolveActiveBot(botId)]);
 
   if (!bot) {
     return NextResponse.json({ error: "Bot not found." }, { status: 404, headers });

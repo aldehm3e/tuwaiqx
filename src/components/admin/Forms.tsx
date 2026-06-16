@@ -1,4 +1,5 @@
 import { Field, inputClass } from "@/src/components/admin/Ui";
+import { ProviderModelFields } from "@/src/components/admin/ProviderModelFields";
 import { SmartForm } from "@/src/components/admin/SmartForm";
 
 export function SettingsForm({
@@ -88,40 +89,12 @@ export function ProviderForm({
 }) {
   return (
     <SmartForm action="/api/admin/providers" submitLabel="Save provider" className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Name">
-          <input className={inputClass} name="name" required defaultValue={defaultName} />
-        </Field>
-        <Field label="Provider type" hint="Use OpenAI-compatible for external APIs or local runtimes such as LM Studio, llama.cpp, LocalAI, vLLM, or SGLang.">
-          <select className={inputClass} name="type" defaultValue="OLLAMA">
-            <option value="OLLAMA">Ollama API</option>
-            <option value="OPENAI_COMPATIBLE">OpenAI-compatible API/runtime</option>
-            <option value="MOCK">Mock</option>
-          </select>
-        </Field>
-        <Field label="Base URL" hint="Examples: LM Studio http://127.0.0.1:1234/v1, llama.cpp http://127.0.0.1:8080/v1, Docker-to-Windows http://host.docker.internal:1234/v1.">
-          <input className={inputClass} name="baseUrl" defaultValue={defaultBaseUrl} />
-        </Field>
-        <Field label="API key" hint="Leave empty for local runtimes unless the runtime requires a key.">
-          <input className={inputClass} name="apiKey" type="password" autoComplete="off" />
-        </Field>
-        <Field label="Chat model" hint="Use the exact chat model name reported by the selected runtime.">
-          <input className={inputClass} name="chatModel" defaultValue={defaultChatModel} placeholder="runtime chat model name" />
-        </Field>
-        <Field label="Embedding model" hint="Use the exact embedding model name reported by the selected runtime. Re-index knowledge after changing it.">
-          <input className={inputClass} name="embeddingModel" defaultValue={defaultEmbeddingModel} placeholder="runtime embedding model name" />
-        </Field>
-      </div>
-      <div className="flex gap-4 text-sm">
-        <label className="flex items-center gap-2">
-          <input name="isDefaultChat" value="true" type="checkbox" defaultChecked />
-          Default chat
-        </label>
-        <label className="flex items-center gap-2">
-          <input name="isDefaultEmbedding" value="true" type="checkbox" defaultChecked />
-          Default embeddings
-        </label>
-      </div>
+      <ProviderModelFields
+        defaultName={defaultName}
+        defaultBaseUrl={defaultBaseUrl}
+        defaultChatModel={defaultChatModel}
+        defaultEmbeddingModel={defaultEmbeddingModel}
+      />
     </SmartForm>
   );
 }
@@ -140,7 +113,7 @@ export function LocalModelUploadForm() {
           </select>
         </Field>
       </div>
-      <Field label="Model file" hint="This only stores a file for a runtime to load. TuwaiqX does not download or execute model weights from this form.">
+      <Field label="Model file" hint="Local model upload stores model files only. A runtime such as LocalAI, Ollama, llama.cpp, vLLM, or SGLang must still load and serve them.">
         <input
           className={inputClass}
           name="file"
@@ -212,7 +185,7 @@ export function BotForm({
             <option value="bottom-left">Bottom left</option>
           </select>
         </Field>
-        <Field label="Chat provider">
+        <Field label="Chat provider" hint="The chat model generates the final assistant answer. Disabled providers are not shown here.">
           <select className={inputClass} name="modelProviderId" defaultValue="">
             <option value="">Installation default</option>
             {providers.map((provider) => (
@@ -222,7 +195,7 @@ export function BotForm({
             ))}
           </select>
         </Field>
-        <Field label="Embedding provider">
+        <Field label="Embedding provider" hint="The embedding model converts text into vectors for knowledge search. Re-index knowledge after changing it.">
           <select className={inputClass} name="embeddingProviderId" defaultValue="">
             <option value="">Installation default</option>
             {providers.map((provider) => (
@@ -246,7 +219,7 @@ export function BotForm({
         <textarea className={inputClass} name="quickActions" rows={3} defaultValue={"Volunteer information\nDonation options\nContact support"} />
       </Field>
       <div className="grid gap-3 text-sm md:grid-cols-4">
-        <label className="flex items-center gap-2">
+        <label className="flex items-center gap-2" title="When enabled, the bot answers only from approved knowledge and falls back when no source is found.">
           <input name="strictMode" value="true" type="checkbox" defaultChecked />
           Strict mode
         </label>
@@ -263,6 +236,9 @@ export function BotForm({
           Active
         </label>
       </div>
+      <p className="text-xs leading-5 text-slate-500">
+        Strict mode answers only from approved knowledge and falls back when no source is found. Embedding providers power knowledge search; chat providers write the final answer.
+      </p>
     </SmartForm>
   );
 }

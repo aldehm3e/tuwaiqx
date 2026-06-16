@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { errorResponse } from "@/src/lib/api/errors";
 import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { prisma } from "@/src/lib/db/prisma";
-import { reindexDocument } from "@/src/lib/documents/indexer";
+import { enqueueDocumentIndex } from "@/src/lib/jobs/queue";
 import { auditLog } from "@/src/lib/services/audit";
 
 export async function POST(request: Request) {
@@ -11,38 +12,38 @@ export async function POST(request: Request) {
 
   try {
     const documents = await prisma.document.findMany({
-      where: { status: { not: "archived" } },
+      where: {
+        status: { not: "archived" }
+      },
       orderBy: { createdAt: "asc" },
       select: { id: true, title: true }
     });
-    let reindexed = 0;
-    const failed: Array<{ id: string; title: string; error: string }> = [];
+    const documentIds = documents.map((document) => document.id);
 
-    for (const document of documents) {
-      try {
-        await reindexDocument(document.id);
-        reindexed += 1;
-      } catch (error) {
-        failed.push({
-          id: document.id,
-          title: document.title,
-          error: error instanceof Error ? error.message : "Re-index failed"
-        });
+    if (!documents.length) {
+      return NextResponse.json({ message: "No active documents to re-index.", queued: 0 });
+    }
+
+    let queued = 0;
+    for (const documentId of documentIds) {
+      const result = await enqueueDocumentIndex(documentId, { force: true });
+      if (result.queued) {
+        queued += 1;
       }
     }
 
     await auditLog({
       userId: guard.admin!.id,
-      action: "documents_reindexed",
+      action: "documents_reindex_queued",
       entity: "Document",
-      metadata: { requested: documents.length, reindexed, failed: failed.length }
+      metadata: { requested: documents.length, queued }
     });
+    revalidatePath("/admin/knowledge");
 
-    const message = failed.length
-      ? `${reindexed} document(s) re-indexed. ${failed.length} failed.`
-      : `${reindexed} document(s) re-indexed.`;
-
-    return NextResponse.json({ message, reindexed, failed });
+    return NextResponse.json({
+      message: `${queued} document(s) queued for re-indexing.`,
+      queued
+    });
   } catch (error) {
     return errorResponse(error);
   }

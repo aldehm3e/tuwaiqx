@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAdminRequest } from "@/src/lib/auth/guards";
 import { crawlWebsite } from "@/src/lib/documents/crawler";
-import { indexTextDocument } from "@/src/lib/documents/indexer";
+import { createTextDocument } from "@/src/lib/documents/indexer";
 import { errorResponse, emptyToNull } from "@/src/lib/api/errors";
 import { auditLog } from "@/src/lib/services/audit";
+import { enqueueDocumentIndex } from "@/src/lib/jobs/queue";
 import { crawlerSchema } from "@/src/lib/validation/schemas";
 
 export async function POST(request: Request) {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     });
     const ids: string[] = [];
     for (const page of pages) {
-      const document = await indexTextDocument({
+      const document = await createTextDocument({
         botId: emptyToNull(input.botId),
         title: page.title,
         content: page.text,
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
         approved: input.approved,
         createdById: guard.admin!.id
       });
+      await enqueueDocumentIndex(document.id);
       ids.push(document.id);
     }
     await auditLog({
@@ -36,9 +38,8 @@ export async function POST(request: Request) {
       entity: "Document",
       metadata: { url: input.url, pages: pages.length }
     });
-    return NextResponse.json({ message: `${ids.length} page(s) crawled and indexed.`, ids });
+    return NextResponse.json({ message: `${ids.length} page(s) crawled. Indexing has been queued.`, ids });
   } catch (error) {
     return errorResponse(error);
   }
 }
-

@@ -21,6 +21,7 @@ const envSchema = z.object({
   OLLAMA_CHAT_TIMEOUT_MS: z.coerce.number().int().positive().default(360000),
   OLLAMA_EMBEDDING_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
   OLLAMA_CHAT_MIN_PREDICT: z.coerce.number().int().positive().default(1024),
+  EMBEDDING_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(1),
   LOCAL_RUNTIME_BASE_URL: z.string().url().default("http://localai:8080/v1"),
   OPENAI_COMPATIBLE_BASE_URL: z.string().optional().default(""),
   OPENAI_COMPATIBLE_API_KEY: z.string().optional().default(""),
@@ -36,6 +37,9 @@ const envSchema = z.object({
     .optional()
     .default("true")
     .transform((value) => value !== "false"),
+  RATE_LIMIT_REDIS_FALLBACK: z.enum(["memory", "deny"]).default(process.env.NODE_ENV === "production" ? "deny" : "memory"),
+  CHAT_RATE_LIMIT_REQUESTS: z.coerce.number().int().positive().default(40),
+  CHAT_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   SOURCE_CODE_URL: z.string().url().default("https://github.com/aldehm3e/tuwaiqx")
 });
 

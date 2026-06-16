@@ -1,5 +1,6 @@
 import { prisma } from "@/src/lib/db/prisma";
 import { providerFromDb } from "@/src/lib/ai/factory";
+import { resolveActiveBotWithProviders } from "@/src/lib/bots/resolve";
 import { findDirectKnowledgeAnswer } from "@/src/lib/rag/direct-answer";
 import { fallbackForLanguage, resolveResponseLanguage } from "@/src/lib/rag/language";
 import { buildRagMessages } from "@/src/lib/rag/prompt";
@@ -71,17 +72,7 @@ export async function answerQuestion(input: {
   pageUrl?: string;
 }): Promise<ChatAnswer> {
   const startedAt = Date.now();
-  const bot = await prisma.bot.findFirst({
-    where: {
-      OR: [{ id: input.botId }, { slug: input.botId }],
-      isActive: true,
-      isArchived: false
-    },
-    include: {
-      modelProvider: true,
-      embeddingProvider: true
-    }
-  });
+  const bot = await resolveActiveBotWithProviders(input.botId);
 
   if (!bot) {
     throw new Error("Bot was not found or is inactive.");

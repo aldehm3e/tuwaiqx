@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { answerQuestion } from "@/src/lib/rag/answer";
 import { corsHeaders } from "@/src/lib/api/cors";
 import { errorResponse } from "@/src/lib/api/errors";
-import { getClientIp, rateLimit } from "@/src/lib/security/rate-limit";
+import { getEnv } from "@/src/lib/config/env";
+import { applyRateLimitHeaders, getClientIp, rateLimit } from "@/src/lib/security/rate-limit";
 import { chatSchema } from "@/src/lib/validation/schemas";
 
 export async function OPTIONS(request: Request) {
@@ -12,16 +13,19 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let headers: Awaited<ReturnType<typeof corsHeaders>> | null = null;
+  let headers: Headers | null = null;
   try {
     const json = await request.json();
     const input = chatSchema.parse(json);
-    headers = await corsHeaders(request, input.pageUrl);
-    if (!headers) {
+    const cors = await corsHeaders(request, input.pageUrl);
+    if (!cors) {
       return NextResponse.json({ error: "Origin is not allowed." }, { status: 403 });
     }
+    headers = new Headers(cors);
 
-    const limited = rateLimit(`chat:${getClientIp(request)}:${input.botId}`, 40, 60_000);
+    const env = getEnv();
+    const limited = await rateLimit(`chat:${getClientIp(request)}:${input.botId}`, env.CHAT_RATE_LIMIT_REQUESTS, env.CHAT_RATE_LIMIT_WINDOW_MS);
+    headers = applyRateLimitHeaders(new Headers(headers), limited);
     if (!limited.allowed) {
       return NextResponse.json({ error: "Rate limit exceeded." }, { status: 429, headers });
     }
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
     const answer = await answerQuestion(input);
     return NextResponse.json(answer, { headers });
   } catch (error) {
-    headers ||= await corsHeaders(request);
+    headers ||= new Headers((await corsHeaders(request)) || undefined);
     return errorResponse(error, 400, headers || undefined);
   }
 }
